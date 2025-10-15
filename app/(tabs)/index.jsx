@@ -253,30 +253,7 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <GlassView style={styles.navBar} glassEffectStyle="clear">
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home" size={24} color="#fff" />
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="people-outline" size={24} color="#fff" />
-          <Text style={styles.navText}>Groups</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItemCenter}>
-          <View style={styles.postButton}>
-            <Ionicons name="add" size={28} color="#000" />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="book-outline" size={24} color="#fff" />
-          <Text style={styles.navText}>Resources</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="settings-outline" size={24} color="#fff" />
-          <Text style={styles.navText}>Settings</Text>
-        </TouchableOpacity>
-      </GlassView>
+    
     </View>
   );
 }
