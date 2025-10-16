@@ -24,7 +24,7 @@ export default function Layout() {
                     glassEffectStyle="clear"
                     style={{
                         position: "absolute",
-                        bottom: -10,
+                        bottom: 20,
                         left: 20,
                         right: 20,
                         height: 60,
