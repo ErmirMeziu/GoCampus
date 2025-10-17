@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PieChart, BarChart } from "react-native-chart-kit";
-import { GlassView } from "expo-glass-effect";
 
 export default function HomeScreen() {
   const screenWidth = Dimensions.get("window").width;
@@ -53,16 +52,18 @@ export default function HomeScreen() {
     },
   ];
 
-  const pieData = [
-    { name: "Notes", population: 45, color: "#4CAF50", legendFontColor: "#fff", legendFontSize: 12 },
-    { name: "Books", population: 30, color: "#2196F3", legendFontColor: "#fff", legendFontSize: 12 },
-    { name: "Videos", population: 25, color: "#FFC107", legendFontColor: "#fff", legendFontSize: 12 },
-  ];
-
   const barData = {
     labels: ["AI", "Web", "DB", "Networks"],
     datasets: [{ data: [80, 60, 70, 50] }],
   };
+
+    const colors = [
+  "rgba(61, 231, 19, 0.8)", 
+  "rgba(240, 43, 4, 0.8)", 
+  "rgba(6, 73, 244, 0.8)",
+  "rgba(90, 140, 255, 0.8)"  
+];
+
 
   const posts = [
     {
@@ -174,43 +175,63 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16 }}
         />
 
-        {/* CHARTS */}
-        <View style={styles.chartBox}>
-          <Text style={styles.sectionTitleInside}>Campus Insights</Text>
-          <Text style={styles.chartLabel}>Resource Usage</Text>
-          <PieChart
-            data={pieData}
-            width={screenWidth - 50}
-            height={180}
-            chartConfig={{
-              backgroundGradientFrom: "transparent",
-              backgroundGradientTo: "transparent",
-              color: () => "#fff",
-              labelColor: () => "#fff",
-            }}
-            accessor={"population"}
-            backgroundColor={"transparent"}
-            paddingLeft={"15"}
-            absolute
-          />
-          <Text style={[styles.chartLabel, { marginTop: 15 }]}>Active Groups</Text>
-          <BarChart
-            data={barData}
-            width={screenWidth - 50}
-            height={180}
-            chartConfig={{
-              backgroundGradientFrom: "transparent",
-              backgroundGradientTo: "transparent",
-              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              labelColor: () => "#fff",
-              decimalPlaces: 0,
-              propsForBackgroundLines: { strokeDasharray: "" },
-            }}
-            fromZero
-            showValuesOnTopOfBars
-            style={{ borderRadius: 16, marginTop: 5, alignSelf: "center" }}
-          />
+{/* CAMPUS INSIGHTS */}
+        <Text style={[styles.sectionTitle, { marginTop: 25 }]}>Campus Insights</Text>
+
+        <View style={styles.insightsContainer}>
+          <Text style={styles.insightsSubtitle}>
+            Discover how active each study group is on campus — join one to boost your learning!
+          </Text>
+
+          {/* Chart 1: Group Participation */}
+          <Text style={styles.insightsLabel}>Group Participation</Text>
+          <View style={{ marginBottom: 15 }}>
+            {barData.labels.map((label, index) => {
+              const value = barData.datasets[0].data[index];
+              return (
+                <View key={index} style={styles.groupRow}>
+                  <Text style={styles.groupName}>{label}</Text>
+                  <View style={styles.groupBarBackground}>
+                    <View
+                      style={[
+                        styles.groupBarFill,
+                        {
+                          width: `${value}%`,
+                          backgroundColor: colors[index % colors.length]
+
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.groupValue}>{value}</Text>
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Top Performing Groups */}
+          <Text style={styles.insightsLabel}>Top Performing Groups</Text>
+          <View style={styles.topGroupsContainer}>
+            {[
+              { icon: "flame", name: "AI Club", stat: "12 Projects" },
+              { icon: "musical-notes", name: "Music Society", stat: "8 Events" },
+              { icon: "brush", name: "Design Crew", stat: "15 Works" },
+            ].map((group, index) => (
+              <View key={index} style={styles.groupCard}>
+                <Ionicons name={group.icon} size={22} color="#fff" />
+                <Text style={styles.cardTitle}>{group.name}</Text>
+                <Text style={styles.cardStat}>{group.stat}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Join Groups Button */}
+          <TouchableOpacity style={styles.joinGroupButton}>
+            <Ionicons name="people" size={18} color="#000" />
+            <Text style={styles.joinGroupText}>Explore Study Groups</Text>
+          </TouchableOpacity>
         </View>
+
 
         {/* RECENT POSTS */}
         <Text style={styles.sectionTitle}>Recent Posts</Text>
@@ -272,7 +293,6 @@ const styles = StyleSheet.create({
 
   scrollArea: { paddingBottom: 120 },
   sectionTitle: { color: "#fff", fontSize: 18, fontWeight: "600", marginHorizontal: 16, marginTop: 20, marginBottom: 10 },
-  sectionTitleInside: { color: "#fff", fontSize: 17, fontWeight: "600", marginBottom: 10 },
 
   /* Events */
   eventCard: { width: 230, height: 200, marginRight: 15, borderRadius: 15, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.1)", shadowColor: "#000", shadowOpacity: 0.25, shadowOffset: { width: 0, height: 3 }, shadowRadius: 5 },
@@ -290,20 +310,98 @@ const styles = StyleSheet.create({
   joinButton: { backgroundColor: "#fff", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
   joinButtonText: { color: "#000", fontWeight: "600", marginLeft: 5, fontSize: 13 },
 
-  /* Charts */
-  chartBox: { marginTop: 20, marginHorizontal: 16, borderRadius: 20, padding: 15, backgroundColor: "rgba(255,255,255,0.08)" },
-  chartLabel: { color: "#ccc", fontSize: 14, marginVertical: 5 },
 
-  /* Recent Posts */
-  postCard: { backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 15, padding: 10, marginHorizontal: 16, marginBottom: 12 },
-  postHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+/* Insights */
+  insightsContainer: {
+    marginHorizontal: 16,
+    borderRadius: 20,
+    padding: 15,
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  insightsSubtitle: { color: "#ccc", fontSize: 12, marginBottom: 15 },
+  insightsLabel: { color: "#fff", fontSize: 14, fontWeight: "600", marginBottom: 8 },
+
+  groupRow: { flexDirection: "row", alignItems: "center", marginVertical: 5 },
+  groupName: { color: "#fff", width: 50, fontSize: 12 },
+  groupBarBackground: {
+    flex: 1,
+    height: 12,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 6,
+    marginHorizontal: 8,
+    overflow: "hidden",
+  },
+  groupBarFill: { height: "100%", borderRadius: 6 },
+  groupValue: { color: "#fff", width: 30, fontSize: 12, textAlign: "right" },
+
+  joinGroupButton: {
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  joinGroupText: { color: "#000", fontWeight: "600", marginLeft: 6 },
+
+  topGroupsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  groupCard: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    marginHorizontal: 4,
+    borderRadius: 14,
+    padding: 10,
+    alignItems: "center",
+  },
+  cardTitle: {
+    color: "#fff",
+    fontWeight: "600",
+    marginTop: 5,
+    fontSize: 13,
+  },
+  cardStat: {
+    color: "#ccc",
+    fontSize: 11,
+    marginTop: 3,
+  },
+
+  /* Posts */
+  postCard: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 15,
+    padding: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  postHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   postAvatar: { width: 36, height: 36, borderRadius: 18 },
   postUser: { color: "#fff", fontWeight: "600", fontSize: 14 },
   postTime: { color: "#ccc", fontSize: 10 },
-  trendingBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "#FF4500", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12 },
+  trendingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FF4500",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
   trendingText: { color: "#fff", fontSize: 10, marginLeft: 3 },
   postText: { color: "#eee", fontSize: 13, marginTop: 8 },
-  postReactions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
+  postReactions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
 
   /* Bottom Nav */
   navBar: { position: "absolute", bottom: 10, left: 15, right: 15, flexDirection: "row", justifyContent: "space-around", alignItems: "center", borderRadius: 25, paddingVertical: 10, backgroundColor: "rgba(255,255,255,0.1)" },
