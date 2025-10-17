@@ -57,12 +57,12 @@ export default function HomeScreen() {
     datasets: [{ data: [80, 60, 70, 50] }],
   };
 
-    const colors = [
-  "rgba(61, 231, 19, 0.8)", 
-  "rgba(240, 43, 4, 0.8)", 
-  "rgba(6, 73, 244, 0.8)",
-  "rgba(90, 140, 255, 0.8)"  
-];
+  const colors = [
+    "rgba(61, 231, 19, 0.8)",
+    "rgba(240, 43, 4, 0.8)",
+    "rgba(6, 73, 244, 0.8)",
+    "rgba(90, 140, 255, 0.8)"
+  ];
 
 
   const posts = [
@@ -175,7 +175,7 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16 }}
         />
 
-{/* CAMPUS INSIGHTS */}
+        {/* CAMPUS INSIGHTS */}
         <Text style={[styles.sectionTitle, { marginTop: 25 }]}>Campus Insights</Text>
 
         <View style={styles.insightsContainer}>
@@ -274,7 +274,7 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-    
+
     </View>
   );
 }
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 50, backgroundColor: "#000" },
 
   /* Header */
-  header: { marginHorizontal: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  header: { marginHorizontal: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingBottom: 8 },
   profileSection: { flexDirection: "row", alignItems: "center" },
   avatar: { backgroundColor: "rgba(255,255,255,0.2)", width: 45, height: 45, borderRadius: 22, justifyContent: "center", alignItems: "center", marginRight: 10 },
   profileName: { color: "#fff", fontSize: 16, fontWeight: "600" },
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   headerIcons: { flexDirection: "row", alignItems: "center" },
   icon: { marginHorizontal: 6 },
 
-  scrollArea: { paddingBottom: 120 },
+  scrollArea: { paddingBottom: 120, top: -15 },
   sectionTitle: { color: "#fff", fontSize: 18, fontWeight: "600", marginHorizontal: 16, marginTop: 20, marginBottom: 10 },
 
   /* Events */
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   joinButtonText: { color: "#000", fontWeight: "600", marginLeft: 5, fontSize: 13 },
 
 
-/* Insights */
+  /* Insights */
   insightsContainer: {
     marginHorizontal: 16,
     borderRadius: 20,

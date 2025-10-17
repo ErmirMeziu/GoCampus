@@ -6,10 +6,12 @@ import {
   Image,
   FlatList,
   Dimensions,
-  SafeAreaView,
+
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
+import { GlassView } from "expo-glass-effect";
+
 
 
 const { width, height } = Dimensions.get("window");
@@ -31,7 +33,7 @@ const otherUsers = [
 
 export default function LeaderboardScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0b0b0e" }}>
+    <View style={{ flex: 1, backgroundColor: "#0b0b0e" }}>
       <LinearGradient
         colors={["#6b5e55", "#3d3430", "#1b1819", "#0b0b0e"]}
         start={{ x: 0, y: 0 }}
@@ -95,8 +97,14 @@ export default function LeaderboardScreen() {
         </View>
 
         {/* Lower leaderboard (fills bottom section) */}
-        <View style={styles.cardWrapper}>
-          <BlurView intensity={40} tint="dark" style={styles.cardContainer}>
+
+        <GlassView
+          style={styles.glassCard}
+          intensity={70}
+          blurAmount={20}
+          tint="systemUltraThinMaterialLight"
+        >
+          <View>
             <FlatList
               data={otherUsers}
               keyExtractor={(item) => item.id}
@@ -124,10 +132,10 @@ export default function LeaderboardScreen() {
                 </View>
               )}
             />
-          </BlurView>
-        </View>
+          </View>
+        </GlassView>
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -137,10 +145,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerText: {
+    alignSelf: "flex-start",
+    left: 20,
+    position: 'absolute',
     fontSize: 22,
     color: "white",
     fontWeight: "700",
-    marginTop: 20,
+    marginTop: 60,
     marginBottom: 8,
   },
   podiumContainer: {
@@ -149,6 +160,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
+    marginTop: 55,
   },
   podiumImage: {
     height: 680,
@@ -201,20 +213,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
- cardWrapper: {
-  flex: 1,
-  width: width,
-  alignSelf: "center",
-  borderRadius: 22,
-  marginBottom: 20,
-  overflow: "hidden",
+  cardWrapper: {
+    flex: 1,
+    width: width,
+    alignSelf: "center",
+    borderRadius: 22,
+    marginBottom: 20,
+    overflow: "hidden",
 
-  shadowColor: "#5a5858ff",
-  shadowOpacity: 0.75,
-  shadowOffset: { width: 0, height: 14 },
-  shadowRadius: 32,
-  elevation: 22,
-},
+    shadowColor: "#5a5858ff",
+    shadowOpacity: 0.75,
+    shadowOffset: { width: 0, height: 14 },
+    shadowRadius: 32,
+    elevation: 22,
+  },
   cardContainer: {
     flex: 1,
     borderRadius: 22,
@@ -267,5 +279,12 @@ const styles = StyleSheet.create({
     color: "#cfcfcf",
     fontWeight: "600",
     fontSize: 14,
+  },
+  glassCard: {
+    width: "90%",
+    height: 360,
+    borderRadius: 36,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
 });
