@@ -1,10 +1,10 @@
 import { Tabs } from "expo-router";
-import { ThemeProvider } from "../components/ThemeProvider";
+import { ThemeProvider } from "../context/ThemeProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
 import { TouchableOpacity, View } from "react-native";
 import React from "react";
-import { useTheme } from "../components/ThemeProvider";
+import { useTheme } from "../context/ThemeProvider";
 
 function TabBar({ props }) {
     const { theme } = useTheme();

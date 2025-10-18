@@ -6,13 +6,10 @@ import {
   Image,
   FlatList,
   Dimensions,
-
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { GlassView } from "expo-glass-effect";
-
-
+import { useTheme } from "../context/ThemeProvider";
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,17 +29,20 @@ const otherUsers = [
 ];
 
 export default function LeaderboardScreen() {
+  const { theme } = useTheme();
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#0b0b0e" }}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <LinearGradient
-        colors={["#6b5e55", "#3d3430", "#1b1819", "#0b0b0e"]}
+        colors={theme.gradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.9, y: 1 }}
         style={styles.gradient}
       >
-        <Text style={styles.headerText}>Leaderboard</Text>
+        <Text style={[styles.headerText, { color: theme.textPrimary }]}>
+          Leaderboard
+        </Text>
 
-        {/* Podium */}
         <View style={styles.podiumContainer}>
           <Image
             source={require("../assets/img/podiumRank.png")}
@@ -50,89 +50,98 @@ export default function LeaderboardScreen() {
             resizeMode="contain"
           />
 
-          {/* 1st */}
           <View style={[styles.userContainer, { top: 30, left: width * 0.44 }]}>
-            <View style={styles.avatarShadow}>
-              <Image
-                source={{ uri: topUsers[1].image }}
-                style={[styles.avatar, { borderColor: "#FFD700" }]}
-              />
-            </View>
-            <View style={[styles.badgeContainer, { backgroundColor: "#FFD700" }]}>
+            <Image
+              source={{ uri: topUsers[1].image }}
+              style={[styles.avatar, { borderColor: theme.gold }]}
+            />
+            <View style={[styles.badgeContainer, { backgroundColor: theme.gold }]}>
               <Text style={styles.badgeText}>1</Text>
             </View>
-            <Text style={styles.name}>{topUsers[1].name}</Text>
-            <Text style={styles.points}>🏆 {topUsers[1].points}</Text>
+            <Text style={[styles.name, { color: theme.textPrimary }]}>
+              {topUsers[1].name}
+            </Text>
+            <Text style={[styles.points, { color: theme.textMuted }]}>
+              🏆 {topUsers[1].points}
+            </Text>
           </View>
 
-          {/* 2nd */}
           <View style={[styles.userContainer, { top: 86, left: width * 0.15 }]}>
-            <View style={styles.avatarShadow}>
-              <Image
-                source={{ uri: topUsers[0].image }}
-                style={[styles.avatar, { borderColor: "#C0C0C0" }]}
-              />
-            </View>
-            <View style={[styles.badgeContainer, { backgroundColor: "#C0C0C0" }]}>
+            <Image
+              source={{ uri: topUsers[0].image }}
+              style={[styles.avatar, { borderColor: theme.silver }]}
+            />
+            <View style={[styles.badgeContainer, { backgroundColor: theme.silver }]}>
               <Text style={styles.badgeText}>2</Text>
             </View>
-            <Text style={styles.name}>{topUsers[0].name}</Text>
-            <Text style={styles.points}>{topUsers[0].points}</Text>
+            <Text style={[styles.name, { color: theme.textPrimary }]}>
+              {topUsers[0].name}
+            </Text>
+            <Text style={[styles.points, { color: theme.textMuted }]}>
+              {topUsers[0].points}
+            </Text>
           </View>
 
-          {/* 3rd */}
-          <View style={[styles.userContainer, { top: 119, right: width * 0.10 }]}>
-            <View style={styles.avatarShadow}>
-              <Image
-                source={{ uri: topUsers[2].image }}
-                style={[styles.avatar, { borderColor: "#CD7F32" }]}
-              />
-            </View>
-            <View style={[styles.badgeContainer, { backgroundColor: "#CD7F32" }]}>
+          <View style={[styles.userContainer, { top: 119, right: width * 0.1 }]}>
+            <Image
+              source={{ uri: topUsers[2].image }}
+              style={[styles.avatar, { borderColor: theme.bronze }]}
+            />
+            <View style={[styles.badgeContainer, { backgroundColor: theme.bronze }]}>
               <Text style={styles.badgeText}>3</Text>
             </View>
-            <Text style={styles.name}>{topUsers[2].name}</Text>
-            <Text style={styles.points}>{topUsers[2].points}</Text>
+            <Text style={[styles.name, { color: theme.textPrimary }]}>
+              {topUsers[2].name}
+            </Text>
+            <Text style={[styles.points, { color: theme.textMuted }]}>
+              {topUsers[2].points}
+            </Text>
           </View>
         </View>
 
-        {/* Lower leaderboard (fills bottom section) */}
 
         <GlassView
-          style={styles.glassCard}
+          style={[styles.glassCard, { backgroundColor: theme.card }]}
           intensity={70}
           blurAmount={20}
           tint="systemUltraThinMaterialLight"
         >
-          <View>
-            <FlatList
-              data={otherUsers}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item, index }) => (
-                <View
-                  style={[
-                    styles.cardRow,
-                    index === otherUsers.length - 1 && { borderBottomWidth: 0 },
-                  ]}
-                >
-                  <View style={styles.rowLeft}>
-                    <Text style={styles.rankNumber}>{index + 4}</Text>
-                    <Image source={{ uri: item.image }} style={styles.listAvatar} />
-                    <Text style={styles.listName}>{item.name}</Text>
-                  </View>
-
-                  <View style={styles.pointsContainer}>
-                    <Image
-                      source={{ uri: "https://cdn-icons-png.flaticon.com/512/2107/2107957.png" }}
-                      style={styles.pointsIcon}
-                    />
-                    <Text style={styles.listPoints}>{item.points}</Text>
-                  </View>
+          <FlatList
+            data={otherUsers}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item, index }) => (
+              <View
+                style={[
+                  styles.cardRow,
+                  { borderBottomColor: theme.border },
+                  index === otherUsers.length - 1 && { borderBottomWidth: 0 },
+                ]}
+              >
+                <View style={styles.rowLeft}>
+                  <Text style={[styles.rankNumber, { color: theme.textMuted }]}>
+                    {index + 4}
+                  </Text>
+                  <Image source={{ uri: item.image }} style={styles.listAvatar} />
+                  <Text style={[styles.listName, { color: theme.textPrimary }]}>
+                    {item.name}
+                  </Text>
                 </View>
-              )}
-            />
-          </View>
+
+                <View style={styles.pointsContainer}>
+                  <Image
+                    source={{
+                      uri: "https://cdn-icons-png.flaticon.com/512/2107/2107957.png",
+                    }}
+                    style={[styles.pointsIcon, { tintColor: theme.gold }]}
+                  />
+                  <Text style={[styles.listPoints, { color: theme.textPrimary }]}>
+                    {item.points}
+                  </Text>
+                </View>
+              </View>
+            )}
+          />
         </GlassView>
       </LinearGradient>
     </View>
@@ -140,54 +149,28 @@ export default function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-    alignItems: "center",
-  },
+  container: { flex: 1 },
+  gradient: { flex: 1, alignItems: "center" },
   headerText: {
     alignSelf: "flex-start",
     left: 20,
-    position: 'absolute',
+    position: "absolute",
     fontSize: 22,
-    color: "white",
     fontWeight: "700",
     marginTop: 60,
     marginBottom: 8,
   },
   podiumContainer: {
     width: "100%",
-    height: height * 0.42,
+    height: 370,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
     marginTop: 55,
   },
-  podiumImage: {
-    height: 680,
-    position: "relative",
-    top: 175,
-    shadowColor: "#5a5858ff",
-    shadowOpacity: 0.7,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 16,
-  },
-  userContainer: {
-    position: "absolute",
-    alignItems: "center",
-  },
-  avatarShadow: {
-    shadowColor: "#FFD700",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 3,
-  },
+  podiumImage: { height: 680, position: "relative", top: 175 },
+  userContainer: { position: "absolute", alignItems: "center" },
+  avatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 3 },
   badgeContainer: {
     position: "absolute",
     top: -8,
@@ -198,42 +181,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  badgeText: {
-    fontSize: 11,
-    color: "#000",
-    fontWeight: "800",
-  },
-  name: {
-    color: "white",
-    fontSize: 13,
-    marginTop: 6,
-  },
-  points: {
-    color: "#d1cfcf",
-    fontSize: 12,
-  },
-
-  cardWrapper: {
-    flex: 1,
-    width: width,
-    alignSelf: "center",
-    borderRadius: 22,
-    marginBottom: 20,
-    overflow: "hidden",
-
-    shadowColor: "#5a5858ff",
-    shadowOpacity: 0.75,
-    shadowOffset: { width: 0, height: 14 },
-    shadowRadius: 32,
-    elevation: 22,
-  },
-  cardContainer: {
-    flex: 1,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    overflow: "hidden",
-    paddingVertical: 4,
-  },
+  badgeText: { fontSize: 11, color: "#000", fontWeight: "800" },
+  name: { fontSize: 13, marginTop: 6 },
+  points: { fontSize: 12 },
   cardRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -241,50 +191,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
   },
-  rowLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  rankNumber: {
-    color: "#aaa",
-    fontWeight: "700",
-    fontSize: 15,
-    width: 24,
-    textAlign: "center",
-    marginRight: 8,
-  },
-  listAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    marginRight: 10,
-  },
-  listName: {
-    color: "white",
-    fontSize: 14,
-  },
-  pointsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  pointsIcon: {
-    width: 16,
-    height: 16,
-    marginRight: 6,
-    tintColor: "#1631c8ff",
-  },
-  listPoints: {
-    color: "#cfcfcf",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  glassCard: {
-    width: "90%",
-    height: 360,
-    borderRadius: 36,
-    paddingHorizontal: 10,
-    backgroundColor: "rgba(255,255,255,0.1)",
-  },
+  rowLeft: { flexDirection: "row", alignItems: "center" },
+  rankNumber: { fontWeight: "700", fontSize: 15, width: 24, textAlign: "center", marginRight: 8 },
+  listAvatar: { width: 42, height: 42, borderRadius: 21, marginRight: 10 },
+  listName: { fontSize: 14 },
+  pointsContainer: { flexDirection: "row", alignItems: "center" },
+  pointsIcon: { width: 16, height: 16, marginRight: 6 },
+  listPoints: { fontWeight: "600", fontSize: 14 },
+  glassCard: { width: "90%", height: 360, borderRadius: 36, paddingHorizontal: 10, marginBottom: 20 },
 });
