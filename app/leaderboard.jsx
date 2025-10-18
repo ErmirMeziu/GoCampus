@@ -17,7 +17,7 @@ import { GlassView } from "expo-glass-effect";
 const { width, height } = Dimensions.get("window");
 
 const topUsers = [
-  { id: "2", name: "joamartini", points: 105, image: "https://randomuser.me/api/portraits/men/31.jpg" },
+  { id: "2", name: "eron", points: 105, image: "https://randomuser.me/api/portraits/men/31.jpg" },
   { id: "1", name: "alex", points: 146, image: "https://randomuser.me/api/portraits/women/40.jpg" },
   { id: "3", name: "ranking", points: 99, image: "https://randomuser.me/api/portraits/men/70.jpg" },
 ];

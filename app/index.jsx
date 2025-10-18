@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   headerIcons: { flexDirection: "row", alignItems: "center" },
   icon: { marginHorizontal: 6 },
 
-  scrollArea: { paddingBottom: 120, top: -20 },
+  scrollArea: { paddingBottom: 120, top: 0 },
   sectionTitle: { color: "#fff", fontSize: 18, fontWeight: "600", marginHorizontal: 16, marginTop: 20, marginBottom: 10 },
 
   /* Events */

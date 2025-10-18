@@ -10,7 +10,6 @@ import {
   Modal,
   TextInput,
   Switch,
-
 } from "react-native";
 import { GlassView } from "expo-glass-effect";
 import { Ionicons } from "@expo/vector-icons";
@@ -149,7 +148,6 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
           <Ionicons name="chevron-back" size={26} color="#fff" />
@@ -160,12 +158,10 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-
         <View style={styles.profileSection}>
           <View style={styles.imageContainer}>
             <Image
@@ -191,7 +187,6 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
-
 
         <GlassView
           style={styles.glassCard}
@@ -233,7 +228,6 @@ export default function ProfileScreen() {
           ))}
         </GlassView>
 
-
         <View style={styles.actionSection}>
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="share-social-outline" size={20} color="#fff" />
@@ -245,10 +239,8 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-
         <View style={styles.bottomSpacing} />
       </ScrollView>
-
 
       <Modal
         animationType="slide"
@@ -292,7 +284,6 @@ export default function ProfileScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
 
   container: {
@@ -318,7 +309,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.5,
   },
-
 
   iconButton: {
     padding: 4,
@@ -347,7 +337,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     justifyContent: "center",
   },
-
 
   profileSection: {
     alignItems: "center",
@@ -472,7 +461,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-
   actionSection: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -481,7 +469,6 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 40,
   },
-
 
   modalOverlay: {
     flex: 1,
