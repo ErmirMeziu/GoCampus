@@ -54,9 +54,46 @@ export default function ResourceSharingScreen() {
     { label: "Shared by Others", value: "others" },
   ]);
 
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const pickImages = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      const newUris = result.assets.map((a) => a.uri);
+      setImages((prev) => [...prev, ...newUris]);
+    }
+  };
+
+  const removeImage = (uri) => {
+    setImages((prev) => prev.filter((i) => i !== uri));
+  };
 
   const handleSubmit = () => {
-  
+     if (!title.trim()) {
+      alert("⚠️ Please add a title.");
+      return;
+    }
+    if (!description.trim()) {
+      alert("⚠️ Please add a description.");
+      return;
+    }
+    if (resourceType === "Equipment") {
+      if (images.length === 0) {
+        alert("⚠️ Please upload at least one image for Equipment.");
+        return;
+      }
+      const duration = parseInt(borrowDuration);
+      if (!duration || duration <= 0) {
+        alert("⚠️ Borrow duration must be a positive number.");
+        return;
+      }
+    }
 
     const newResource = {
       id: Date.now(),
@@ -197,6 +234,34 @@ export default function ResourceSharingScreen() {
                 onChangeText={setDescription}
                 multiline
               />
+
+               {resourceType === "Equipment" && (
+                <>
+                  <Text style={styles.label}>Condition</Text>
+                  <View style={styles.typeSelector}>
+                    {["New", "Good", "Used"].map((c) => (
+                      <TouchableOpacity
+                        key={c}
+                        style={[styles.typeButton, condition === c && styles.typeButtonActive]}
+                        onPress={() => setCondition(c)}
+                      >
+                        <Text style={[styles.typeButtonText, condition === c && styles.typeButtonTextActive]}>
+                          {c}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.label}>Max Borrow Duration (days)</Text>
+                  <TextInput
+                    placeholder="e.g. 3"
+                    keyboardType="numeric"
+                    style={styles.input}
+                    value={borrowDuration}
+                    onChangeText={setBorrowDuration}
+                  />
+                </>
+              )}
 
               <Text style={styles.label}>Images</Text>
               <TouchableOpacity style={styles.imagePicker} onPress={pickImages}>
