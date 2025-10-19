@@ -235,7 +235,7 @@ export default function ResourceSharingScreen() {
                 multiline
               />
 
-               {resourceType === "Equipment" && (
+              {resourceType === "Equipment" && (
                 <>
                   <Text style={styles.label}>Condition</Text>
                   <View style={styles.typeSelector}>
