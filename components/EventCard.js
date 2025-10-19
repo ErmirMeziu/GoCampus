@@ -34,25 +34,9 @@ export default function EventCard({ item, theme }) {
 }
 
 const styles = StyleSheet.create({
-    eventCard: {
-        width: 240,
-        borderRadius: 16,
-        marginRight: 12,
-        overflow: "hidden",
-    },
-    eventImage: {
-        width: "100%",
-        height: 110,
-    },
-    eventBody: {
-        padding: 10,
-    },
-    eventTitle: {
-        fontWeight: "700",
-        fontSize: 14,
-    },
-    eventMeta: {
-        fontSize: 11,
-        marginTop: 4,
-    },
+    eventCard: { width: 240,borderRadius: 16, marginRight: 12,overflow: "hidden",},
+    eventImage: { width: "100%",height: 110, },
+    eventBody: {padding: 10, },
+    eventTitle: { fontWeight: "700", fontSize: 14,},
+    eventMeta: { fontSize: 11, marginTop: 4, },
 });

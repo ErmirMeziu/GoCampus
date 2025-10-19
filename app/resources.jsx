@@ -1,406 +1,353 @@
-import React, { useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  TextInput,
   StyleSheet,
-  Platform,
-  KeyboardAvoidingView,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ImageBackground,
+  RefreshControl,
   Modal,
   Pressable,
+  ScrollView,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
-import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import DropDownPicker from "react-native-dropdown-picker";
+import { GlassView } from "expo-glass-effect";
+import * as ImagePicker from "expo-image-picker";
+import { useTheme } from "../context/ThemeProvider";
+
+import CreateResourceModal from "../components/CreateResourceModal";
+
+const CATEGORY_CHIPS = ["All", "Notes", "Books", "Equipment"];
+
+const SEED_SHARED = [
+  {
+    id: "r1",
+    resourceType: "Notes",
+    title: "Physics Lecture Notes",
+    description: "Chapter 1–3 summaries and key formulas.",
+    images: [
+      "https://images.unsplash.com/photo-1581091012184-5c7b3b8b7da1?w=800&q=80",
+    ],
+    owner: "others",
+  },
+  {
+    id: "r2",
+    resourceType: "Equipment",
+    title: "Lab Microscope",
+    description: "Available for 3 days.",
+    condition: "Good",
+    borrowDuration: "3",
+    images: [
+      "https://images.unsplash.com/photo-1593642532400-2682810df593?w=800&q=80",
+    ],
+    owner: "others",
+  },
+];
 
 export default function ResourceSharingScreen() {
-  const [activeTab, setActiveTab] = useState("list");
+  const { theme, isDarkMode } = useTheme();
+
   const [myResources, setMyResources] = useState([]);
-  const [sharedResources, setSharedResources] = useState([
-    {
-      id: 1,
-      resourceType: "Notes",
-      title: "Physics Lecture Notes",
-      description: "Chapter 1-3 summaries",
-      images: [],
-    },
-    {
-      id: 2,
-      resourceType: "Equipment",
-      title: "Lab Microscope",
-      description: "Available for 3 days",
-      condition: "Good",
-      borrowDuration: "3",
-      images: [],
-    },
-  ]);
+  const [sharedResources, setSharedResources] = useState(SEED_SHARED);
 
-  const [resourceType, setResourceType] = useState("Notes");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [condition, setCondition] = useState("Good");
-  const [borrowDuration, setBorrowDuration] = useState("");
-  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState("");
+  const [activeCat, setActiveCat] = useState("All");
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [listType, setListType] = useState("myShares");
-  const [dropdownItems, setDropdownItems] = useState([
-    { label: "My Shares", value: "myShares" },
-    { label: "Shared by Others", value: "others" },
-  ]);
+  const [createVisible, setCreateVisible] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
 
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const pickImages = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 600);
+  }, []);
+
+  const pickImagesMulti = async () => {
+    const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 0.7,
+      quality: 0.8,
     });
-
-    if (!result.canceled) {
-      const newUris = result.assets.map((a) => a.uri);
-      setImages((prev) => [...prev, ...newUris]);
-    }
+    if (res?.canceled) return [];
+    return (res?.assets || []).map((a) => a.uri);
   };
 
-  const removeImage = (uri) => {
-    setImages((prev) => prev.filter((i) => i !== uri));
+  const allResources = useMemo(() => {
+    const combined = [
+      ...myResources.map((r) => ({ ...r, owner: "me" })),
+      ...sharedResources,
+    ];
+    const q = query.trim().toLowerCase();
+    return combined.filter((r) => {
+      const catOk = activeCat === "All" || r.resourceType === activeCat;
+      const qOk =
+        !q ||
+        r.title.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q);
+      return catOk && qOk;
+    });
+  }, [myResources, sharedResources, query, activeCat]);
+
+  const myCarousel = useMemo(() => myResources, [myResources]);
+
+  const handleCreate = (payload) => {
+    const res = { id: `r${Date.now()}`, ...payload, owner: "me" };
+    setMyResources((prev) => [res, ...prev]);
+    setCreateVisible(false);
   };
 
-  const handleSubmit = () => {
-     if (!title.trim()) {
-      alert("⚠️ Please add a title.");
-      return;
-    }
-    if (!description.trim()) {
-      alert("⚠️ Please add a description.");
-      return;
-    }
-    if (resourceType === "Equipment") {
-      if (images.length === 0) {
-        alert("⚠️ Please upload at least one image for Equipment.");
-        return;
-      }
-      const duration = parseInt(borrowDuration);
-      if (!duration || duration <= 0) {
-        alert("⚠️ Borrow duration must be a positive number.");
-        return;
-      }
-    }
-
-    const newResource = {
-      id: Date.now(),
-      resourceType,
-      title,
-      description,
-      condition: resourceType === "Equipment" ? condition : undefined,
-      borrowDuration: resourceType === "Equipment" ? borrowDuration : undefined,
-      images,
-    };
-
-    setMyResources((prev) => [newResource, ...prev]);
-    setActiveTab("list");
-    setListType("myShares");
-
-    setTitle("");
-    setDescription("");
-    setCondition("Good");
-    setBorrowDuration("");
-    setImages([]);
+  const handleEditSave = (updated) => {
+    setMyResources((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    setEditVisible(false);
+    setEditTarget(null);
   };
 
-  const renderResourceCard = (resource) => (
-    <View key={resource.id} style={styles.card}>
-      <Text style={styles.cardTitle}>
-        {resource.title} ({resource.resourceType})
-      </Text>
-      <Text style={styles.cardDesc}>{resource.description}</Text>
-      {resource.condition && (
-        <Text style={styles.cardInfo}>Condition: {resource.condition}</Text>
-      )}
-      {resource.borrowDuration && (
-        <Text style={styles.cardInfo}>
-          Max Borrow Duration: {resource.borrowDuration} days
+  const handleDelete = (id) => {
+    setMyResources((prev) => prev.filter((r) => r.id !== id));
+    setEditVisible(false);
+  };
+
+  const renderMyMini = ({ item }) => (
+    <TouchableOpacity
+      onPress={() => {
+        setEditTarget(item);
+        setEditVisible(true);
+      }}
+    >
+      <GlassView
+        glassEffectStyle="clear"
+        intensity={50}
+        style={[styles.miniCard, { backgroundColor: theme.card }]}
+      >
+        <Image
+          source={{
+            uri:
+              item.images?.[0] ||
+              "https://images.unsplash.com/photo-1505666287802-931dc83948e1?w=800&q=80",
+          }}
+          style={styles.miniCover}
+        />
+        <View style={{ padding: 10 }}>
+          <Text style={[styles.miniTitle, { color: theme.textPrimary }]} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
+            <Ionicons name="pricetag-outline" size={12} color={theme.textMuted} />
+            <Text style={[styles.miniMeta, { color: theme.textMuted }]}>
+              {" "}
+              {item.resourceType}
+            </Text>
+          </View>
+        </View>
+      </GlassView>
+    </TouchableOpacity>
+  );
+
+  const renderCard = ({ item }) => (
+    <GlassView
+      glassEffectStyle="clear"
+      intensity={60}
+      style={[styles.card, { backgroundColor: theme.card }]}
+    >
+      <Image
+        source={{
+          uri:
+            item.images?.[0] ||
+            "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?w=800&q=80",
+        }}
+        style={styles.cardImage}
+      />
+      <View style={styles.cardBody}>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary }]} numberOfLines={1}>
+            {item.title}
+          </Text>
+          {item.owner === "me" && (
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setEditTarget(item);
+                  setEditVisible(true);
+                }}
+              >
+                <Ionicons name="create-outline" size={18} color={theme.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(item.id)} style={{ marginLeft: 8 }}>
+                <Ionicons name="trash-outline" size={18} color={theme.danger || "red"} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        <Text style={[styles.cardDesc, { color: theme.textMuted }]} numberOfLines={2}>
+          {item.description}
         </Text>
-      )}
-      {resource.images.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
-          {resource.images.map((uri, idx) => (
-            <Pressable
-              key={idx}
-              onPress={() => {
-                setSelectedImage(uri);
-                setImageModalVisible(true);
-              }}
-            >
-              <Image source={{ uri }} style={styles.previewImage} />
-            </Pressable>
-          ))}
-        </ScrollView>
-      )}
-    </View>
+
+        {item.resourceType === "Equipment" && (
+          <Text style={[styles.cardInfo, { color: theme.textPrimary }]}>
+            {item.condition} • {item.borrowDuration} days
+          </Text>
+        )}
+
+        {item.images?.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+            {item.images.map((uri, idx) => (
+              <Pressable key={idx} onPress={() => { setSelectedImage(uri); setImageModalVisible(true); }}>
+                <Image source={{ uri }} style={styles.preview} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+    </GlassView>
   );
 
   return (
-    <LinearGradient
-      colors={["#f5f7fa", "#c3cfe2"]}
-      style={{ flex: 1 }}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
-      <View style={styles.topBar}>
-        <DropDownPicker
-          open={dropdownOpen}
-          value={listType}
-          items={dropdownItems}
-          setOpen={setDropdownOpen}
-          setValue={setListType}
-          setItems={setDropdownItems}
-          containerStyle={{ flex: 1, marginRight: 10, zIndex: 1000 }}
-          style={{ backgroundColor: "rgba(255,255,255,0.4)" }}
-          dropDownContainerStyle={{ backgroundColor: "rgba(255,255,255,0.95)", zIndex: 1000 }}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={() => setActiveTab("add")}>
-          <Ionicons name="add" size={28} color="#fff" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <ImageBackground
+        source={
+          isDarkMode
+            ? require("../assets/backgrounds/dark.png")
+            : require("../assets/backgrounds/light.png")
+        }
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Resources</Text>
+        <TouchableOpacity onPress={() => setCreateVisible(true)}>
+          <Ionicons style={{padding:6,}} name="add-circle-outline" size={22} color={theme.primary} />
         </TouchableOpacity>
       </View>
-      
-      {activeTab === "list" && (
-        <ScrollView style={{ flex: 1, padding: 10 }} showsVerticalScrollIndicator={false}>
-          {listType === "myShares"
-            ? myResources.length === 0
-              ? <Text style={{ textAlign: "center", marginTop: 50, color: "#333" }}>You haven’t shared anything yet.</Text>
-              : myResources.map(renderResourceCard)
-            : sharedResources.map(renderResourceCard)}
-        </ScrollView>
-      )}
 
-      {activeTab === "add" && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
-          <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-            <BlurView intensity={90} tint="light" style={styles.form}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => {
-                  setActiveTab("list");
-                  setListType("myShares");
-                  setTitle("");
-                  setDescription("");
-                  setCondition("Good");
-                  setBorrowDuration("");
-                  setImages([]);
-                }}
-              >
-                <Ionicons name="close" size={26} color="#333" />
-              </TouchableOpacity>
-
-              <Text style={styles.label}>Resource Type</Text>
-              <View style={styles.typeSelector}>
-                {["Notes", "Equipment", "Books"].map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.typeButton, resourceType === type && styles.typeButtonActive]}
-                    onPress={() => setResourceType(type)}
-                  >
-                    <Text style={[styles.typeButtonText, resourceType === type && styles.typeButtonTextActive]}>
-                      {type}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.label}>Title</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={`Enter ${resourceType.toLowerCase()} title`}
-                value={title}
-                onChangeText={setTitle}
-              />
-              <Text style={styles.label}>Description</Text>
-              <TextInput
-                style={[styles.input, { height: 100 }]}
-                placeholder="Describe your resource..."
-                value={description}
-                onChangeText={setDescription}
-                multiline
-              />
-
-              {resourceType === "Equipment" && (
-                <>
-                  <Text style={styles.label}>Condition</Text>
-                  <View style={styles.typeSelector}>
-                    {["New", "Good", "Used"].map((c) => (
-                      <TouchableOpacity
-                        key={c}
-                        style={[styles.typeButton, condition === c && styles.typeButtonActive]}
-                        onPress={() => setCondition(c)}
-                      >
-                        <Text style={[styles.typeButtonText, condition === c && styles.typeButtonTextActive]}>
-                          {c}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <Text style={styles.label}>Max Borrow Duration (days)</Text>
-                  <TextInput
-                    placeholder="e.g. 3"
-                    keyboardType="numeric"
-                    style={styles.input}
-                    value={borrowDuration}
-                    onChangeText={setBorrowDuration}
-                  />
-                </>
-              )}
-
-              <Text style={styles.label}>Images</Text>
-              <TouchableOpacity style={styles.imagePicker} onPress={pickImages}>
-                <Ionicons name="images-outline" size={26} color="#333" />
-                <Text style={styles.imagePickerText}>
-                  {images.length > 0 ? `Selected ${images.length} image(s)` : "Upload Images"}
-                </Text>
-              </TouchableOpacity>
-
-              {images.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-                  {images.map((uri, index) => (
-                    <View key={index} style={styles.imageWrapper}>
-                      <Image source={{ uri }} style={styles.previewImage} />
-                      <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(uri)}>
-                        <Ionicons name="close-circle" size={20} color="#ff4444" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitText}>Post Resource</Text>
-              </TouchableOpacity>
-            </BlurView>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      )}
-
-       <Modal visible={imageModalVisible} transparent={true}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity
-            style={styles.modalCloseButton}
-            onPress={() => setImageModalVisible(false)}
-          >
-            <Ionicons name="close" size={32} color="#fff" />
+      <GlassView intensity={60} style={[styles.searchBar, { backgroundColor: theme.card }]}>
+        <Ionicons name="search" size={16} color={theme.textMuted} />
+        <TextInput
+          placeholder="Search resources..."
+          placeholderTextColor={theme.textMuted}
+          value={query}
+          onChangeText={setQuery}
+          style={[styles.searchInput, { color: theme.textPrimary }]}
+        />
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => setQuery("")}>
+            <Ionicons name="close-circle" size={18} color={theme.textMuted} />
           </TouchableOpacity>
-          <Image
-            source={{ uri: selectedImage }}
-            style={styles.fullScreenImage}
-            resizeMode="contain"
-          />
-        </View>
+        )}
+      </GlassView>
+
+      <View style={styles.categories}>
+        {CATEGORY_CHIPS.map((c) => (
+          <TouchableOpacity
+            key={c}
+            onPress={() => setActiveCat(c)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: activeCat === c ? theme.primary : theme.overlay,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                color: activeCat === c ? "#fff" : theme.textPrimary,
+                fontWeight: "600",
+              }}
+            >
+              {c}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <FlatList
+        data={allResources}
+        keyExtractor={(i) => i.id}
+        renderItem={renderCard}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 16 }}
+        ListHeaderComponent={
+          myCarousel.length > 0 && (
+            <View style={{ marginTop: 10 }}>
+              <Text style={[styles.section, { color: theme.textPrimary }]}>My Resources</Text>
+              <FlatList
+                horizontal
+                data={myCarousel}
+                keyExtractor={(i) => i.id}
+                renderItem={renderMyMini}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 16 }}
+              />
+              <Text style={[styles.section, { color: theme.textPrimary }]}>All Resources</Text>
+            </View>
+          )
+        }
+      />
+
+      <Modal visible={imageModalVisible} transparent onRequestClose={() => setImageModalVisible(false)}>
+        <Pressable style={styles.lightbox} onPress={() => setImageModalVisible(false)}>
+          {selectedImage && (
+            <Image source={{ uri: selectedImage }} style={{ width: "100%", height: "80%" }} resizeMode="contain" />
+          )}
+        </Pressable>
       </Modal>
-    </LinearGradient>
+
+      {createVisible && (
+        <CreateResourceModal
+          visible
+          onClose={() => setCreateVisible(false)}
+          onSave={handleCreate}
+          pickImages={pickImagesMulti}
+          theme={theme}
+        />
+      )}
+      {editVisible && editTarget && (
+        <CreateResourceModal
+          visible
+          editMode
+          initialData={editTarget}
+          onClose={() => setEditVisible(false)}
+          onSave={handleEditSave}
+          onDelete={() => handleDelete(editTarget.id)}
+          pickImages={pickImagesMulti}
+          theme={theme}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: Platform.OS === "ios" ? 50 : 20,
-    marginHorizontal: 10,
-    zIndex: 1000,
-  },
-  addButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#0072ff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  form: {
-    borderRadius: 20,
-    padding: 16,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    marginVertical: 10,
-    position: "relative",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(255,255,255,0.7)",
-    borderRadius: 20,
-    padding: 4,
-    zIndex: 100,
-  },
-  label: { fontWeight: "600", marginTop: 10, marginBottom: 6, color: "#333" },
-  input: {
-    backgroundColor: "rgba(255,255,255,0.8)",
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-  },
-  typeSelector: { flexDirection: "row", marginVertical: 6 },
-  typeButton: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.6)",
-    marginRight: 8,
-    alignItems: "center",
-  },
-  typeButtonActive: { backgroundColor: "#0072ff" },
-  typeButtonText: { color: "#333", fontWeight: "500" },
-  typeButtonTextActive: { color: "#fff", fontWeight: "700" },
-  imagePicker: {
-    backgroundColor: "rgba(255,255,255,0.4)",
-    borderRadius: 16,
-    height: 120,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 6,
-  },
-  imagePickerText: { color: "#333", marginTop: 8, fontWeight: "500" },
-  imageWrapper: { marginRight: 10, position: "relative" },
-  previewImage: { width: 120, height: 120, borderRadius: 14 },
-  removeBtn: { position: "absolute", top: -6, right: -6, backgroundColor: "#fff", borderRadius: 10 },
-  submitButton: {
-    marginTop: 20,
-    backgroundColor: "#0072ff",
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  submitText: { color: "#fff", fontWeight: "600", fontSize: 18 },
-  card: { backgroundColor: "rgba(255,255,255,0.8)", borderRadius: 16, padding: 12, marginVertical: 6 },
-  cardTitle: { fontWeight: "700", fontSize: 16, color: "#0072ff" },
-  cardDesc: { fontSize: 14, marginTop: 4, color: "#333" },
-  cardInfo: { fontSize: 12, color: "#555", marginTop: 2 },
-   modalContainer: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.9)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalCloseButton: {
-    position: "absolute",
-    top: 40,
-    right: 20,
-    zIndex: 10,
-  },
-  fullScreenImage: {
-    width: "100%",
-    height: "100%",
-  },
+  container: { flex: 1 }, header: { marginTop: 45,paddingHorizontal: 16,flexDirection: "row",justifyContent: "space-between",alignItems: "center",},
+  title: { fontSize: 24, fontWeight: "700" },
+  searchBar: {flexDirection: "row",alignItems: "center", borderRadius: 16,paddingHorizontal: 12,paddingVertical: 10,margin: 16,gap: 8,minHeight:41,bottom:4,},
+  searchInput: { flex: 1, fontSize: 14},
+  categories: {flexDirection: "row",flexWrap: "wrap",justifyContent: "center",marginBottom: 0,bottom:5, },
+  chip: {paddingHorizontal: 12,paddingVertical: 8,borderRadius: 20,marginHorizontal: 4,marginBottom: 6,borderWidth: 1,},
+  section: { fontSize: 16, fontWeight: "700", marginVertical: 8 },
+
+  miniCard: { width: 160, borderRadius: 16, overflow: "hidden", marginRight: 12 },
+  miniCover: { width: "100%", height: 86 },
+  miniTitle: { fontSize: 13, fontWeight: "700" },
+  miniMeta: { fontSize: 11 },
+
+  card: { borderRadius: 18, overflow: "hidden", marginBottom: 14 },
+  cardImage: { width: "100%", height: 140 },
+  cardBody: { padding: 12 },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  cardTitle: { fontSize: 16, fontWeight: "700" },
+  cardDesc: { fontSize: 13, marginTop: 6 },
+  cardInfo: { fontSize: 12, marginTop: 4 },
+  preview: { width: 110, height: 80, borderRadius: 12, marginRight: 8 },
+
+  lightbox: {flex: 1, backgroundColor: "rgba(0,0,0,0.9)",justifyContent: "center", alignItems: "center",},
 });

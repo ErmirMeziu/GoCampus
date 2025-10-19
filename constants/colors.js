@@ -17,15 +17,12 @@ export const Colors = {
         danger: "#FF3B30",
         info: "#2196F3",
 
-        // leaderboard
         gold: "#FFD700",
         silver: "#C0C0C0",
         bronze: "#CD7F32",
 
-        // gradients
         gradientBackground: ["#f5f7fa", "#e4ebf0", "#d6dee5"],
 
-        // icons
         iconColorFocused: "#000000",
         iconColor: "darkslategrey",
     },
@@ -48,15 +45,12 @@ export const Colors = {
         danger: "#FF3B30",
         info: "#2196F3",
 
-        // leaderboard
         gold: "#FFD700",
         silver: "#C0C0C0",
         bronze: "#CD7F32",
 
-        // gradients
         gradientBackground: ["#6b5e55", "#3d3430", "#1b1819", "#0b0b0e"],
 
-        // icons
         iconColorFocused: "#FFFFFF",
         iconColor: "#CCCCCC",
     },

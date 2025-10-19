@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   headerBtn: { padding: 6, marginLeft: 8 },
 
   filterHeader: { marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 12, marginBottom: 10 },
-  searchRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  searchRow: { flexDirection: "row", alignItems: "center", gap: 8},
   searchInput: { flex: 1, fontSize: 14 },
 
   categoriesWrap: { flexDirection: "row", flexWrap: "wrap", alignSelf: "center" },

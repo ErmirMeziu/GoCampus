@@ -125,14 +125,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContainer: { paddingBottom: 80 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 0.5,
-  },
+  header: {flexDirection: "row",alignItems: "center",justifyContent: "space-between",paddingHorizontal: 20,paddingVertical: 16,borderBottomWidth: 0.5,},
   headerTitle: { fontSize: 18, fontWeight: "700" },
   iconButton: { padding: 4 },
   profileSection: { alignItems: "center", paddingVertical: 30, paddingHorizontal: 20 },
