@@ -1,5 +1,12 @@
 # 🎓 GoCampus
 
+[![React](https://img.shields.io/badge/React-18+-61DAFB.svg?logo=react&logoColor=white)](https://react.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.76+-20232A.svg?logo=react&logoColor=61DAFB)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-51+-000020.svg?logo=expo&logoColor=white)](https://expo.dev/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E.svg?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
 **GoCampus** is a mobile application built with **Expo / React Native**, designed to help students discover and join campus **groups**, keep track of **upcoming events**, view **leaderboards**, access **resources**, and manage their **profile** — all in one place.  
 The goal of this project is to make it easy for students to quickly find communities, stay informed, and participate in campus life.
 
@@ -48,59 +55,71 @@ GoCampus provides a simple and efficient way for students to:
 
 ## 📲 UI Preview
 
-### 🔹 Groups Screen
-![Groups](./assets/groups.png)
+### 🔹 Home
+<img src="./assets/home.jpg" width="350"/>
 
-### 🔹 Upcoming Events
-![Events](./assets/events.png)
+### 🔹 Groups Screen
+<img src="./assets/groups.jpg" width="350"/>
 
 ### 🔹 Leaderboard
-![Leaderboard](./assets/leaderboard.png)
+<img src="./assets/leaderboard.jpg" width="350"/>
 
 ### 🔹 Resources
-![Resources](./assets/resources.png)
+<img src="./assets/resources.jpg" width="350"/>
 
 ### 🔹 Profile
-![Profile](./assets/profile.png)
+<img src="./assets/profile.jpg" width="350"/>
 
 ---
 
 ## 📁 Minimal Structure
 
 ```
-├── app/
-│ ├── _layout.jsx # Tabs / navigation shell
-│ ├── index.jsx # Home (landing)
-│ ├── groups.jsx # Groups + search/filters + create group/event + events rail
-│ ├── leaderboard.jsx # Leaderboard
-│ ├── resources.jsx # Resources
-│ └── profile.jsx # Profile
+gocampus/
 │
-├── assets/
-│ ├── backgrounds/
-│ │ ├── light.png
-│ │ └── dark.png
-│ └── img/
-│ ├── events.png
-│ ├── groups.png
-│ ├── leaderboard.png
-│ ├── profile.png
-│ └── splash-icon.png
+├── app/                         # All screens (Expo Router)
+│   ├── _layout.jsx              # Tabs / navigation shell
+│   ├── index.jsx                # Home (Landing / Dashboard)
+│   ├── groups.jsx               # Groups screen (create/join/edit)
+│   ├── resources.jsx            # Resource sharing (notes/books/equipment)
+│   ├── leaderboard.jsx          # Leaderboard screen
+│   └── profile.jsx              # Profile screen
 │
-├── components/
-│ ├── EditSettingModal.js
-│ ├── ProfileActions.js
-│ └── SettingsList.js
+├── assets/                      # Images and backgrounds
+│   ├── backgrounds/
+│   │   ├── light.png
+│   │   └── dark.png
+│   └── img/
+│       ├── groups.jpg
+│       ├── home.jpg
+│       ├── leaderboard.jpg
+│       ├── profile.jpg
+│       ├── resources.jpg
+│       └── splash-icon.png
+│
+├── components/                  # Reusable UI blocks + modals
+│   ├── CreateEventModal.js
+│   ├── CreateGroupModal.js
+│   ├── CreateResourceModal.js
+│   ├── EditGroupModal.js
+│   ├── EditSettingModal.js
+│   ├── EventCard.js
+│   ├── GroupDetail.js
+│   ├── ProfileActions.js
+│   ├── SettingsList.js
+│   └── index.js                 # (optional: export all components here)
 │
 ├── constants/
-│ └── colors.js # Theme tokens (light/dark)
+│   └── colors.js                # Centralized theme colors (light/dark)
 │
 ├── context/
-│ └── ThemeProvider.js # Theme context + hook
+│   └── ThemeProvider.js         # Theme context + custom hook
 │
 ├── app.json
 ├── package.json
-└── package-lock.json
+├── package-lock.json
+└── README.md
+
 ```
 
 ---

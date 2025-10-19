@@ -24,16 +24,6 @@ const CATEGORY_CHIPS = ["All", "Notes", "Books", "Equipment"];
 
 const SEED_SHARED = [
   {
-    id: "r1",
-    resourceType: "Notes",
-    title: "Physics Lecture Notes",
-    description: "Chapter 1–3 summaries and key formulas.",
-    images: [
-      "https://images.unsplash.com/photo-1581091012184-5c7b3b8b7da1?w=800&q=80",
-    ],
-    owner: "others",
-  },
-  {
     id: "r2",
     resourceType: "Equipment",
     title: "Lab Microscope",
