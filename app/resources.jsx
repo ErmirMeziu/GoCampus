@@ -271,11 +271,42 @@ export default function ResourceSharingScreen() {
                 </Text>
               </TouchableOpacity>
 
-          
+              {images.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                  {images.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{ uri }} style={styles.previewImage} />
+                      <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(uri)}>
+                        <Ionicons name="close-circle" size={20} color="#ff4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                <Text style={styles.submitText}>Post Resource</Text>
+              </TouchableOpacity>
             </BlurView>
           </ScrollView>
         </KeyboardAvoidingView>
       )}
+
+       <Modal visible={imageModalVisible} transparent={true}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.modalCloseButton}
+            onPress={() => setImageModalVisible(false)}
+          >
+            <Ionicons name="close" size={32} color="#fff" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.fullScreenImage}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -356,4 +387,20 @@ const styles = StyleSheet.create({
   cardTitle: { fontWeight: "700", fontSize: 16, color: "#0072ff" },
   cardDesc: { fontSize: 14, marginTop: 4, color: "#333" },
   cardInfo: { fontSize: 12, color: "#555", marginTop: 2 },
+   modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCloseButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 10,
+  },
+  fullScreenImage: {
+    width: "100%",
+    height: "100%",
+  },
 });
