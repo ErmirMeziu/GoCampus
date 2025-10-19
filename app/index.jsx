@@ -102,12 +102,12 @@ export default function HomeScreen() {
       <ImageBackground
         source={
           isDarkMode
-            ? require("../assets/backgrounds/dark.png") 
-            : require("../assets/backgrounds/light.png") 
+            ? require("../assets/backgrounds/dark.png")
+            : require("../assets/backgrounds/light.png")
         }
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
-        
+
       />
 
       <View style={styles.header}>
@@ -127,7 +127,7 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollArea}>
-   
+
         <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Upcoming Events</Text>
         <FlatList
           data={events}
@@ -163,14 +163,14 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16 }}
         />
 
-        
+
         <Text style={[styles.sectionTitle, { marginTop: 25, color: theme.textPrimary }]}>Campus Insights</Text>
         <GlassView glassEffectStyle="clear" intensity={50} style={styles.insightsContainer}>
           <Text style={[styles.insightsSubtitle, { color: theme.textMuted }]}>
             Discover how active each study group is on campus — join one to boost your learning!
           </Text>
 
-         
+
           {barData.labels.map((label, index) => {
             const value = barData.datasets[0].data[index];
             return (
@@ -189,12 +189,12 @@ export default function HomeScreen() {
             );
           })}
 
-    
-          <Text style={styles.insightsLabel}>Top Performing Groups</Text>
+
+          <Text style={[styles.insightsLabel, { color: theme.textPrimary }]}>Top Performing Groups</Text>
           <View style={styles.topGroupsContainer}>
             {[
               { icon: "flame", name: "AI Club", stat: "12 Projects" },
-              { icon: "musical-notes", name: "Music Society", stat: "8 Events" },
+              { icon: "musical-notes", name: "Music", stat: "8 Events" },
               { icon: "brush", name: "Design Crew", stat: "15 Works" },
             ].map((group, index) => (
               <GlassView
@@ -210,14 +210,14 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          
+
           <TouchableOpacity style={[styles.joinGroupButton, { backgroundColor: theme.primary }]}>
             <Ionicons name="people" size={18} color="#fff" />
             <Text style={styles.joinGroupText}>Explore Study Groups</Text>
           </TouchableOpacity>
         </GlassView>
 
-        
+
         <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Recent Posts</Text>
         {posts.map((post) => (
           <GlassView key={post.id} intensity={40} style={styles.postCard}>
