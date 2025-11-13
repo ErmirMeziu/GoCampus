@@ -16,9 +16,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
 import * as ImagePicker from "expo-image-picker";
-import { useTheme } from "../context/ThemeProvider";
+import { useTheme } from "../../context/ThemeProvider";
 
-import CreateResourceModal from "../components/CreateResourceModal";
+import CreateResourceModal from "../../components/CreateResourceModal";
 
 const CATEGORY_CHIPS = ["All", "Notes", "Books", "Equipment"];
 
@@ -204,8 +204,8 @@ export default function ResourceSharingScreen() {
       <ImageBackground
         source={
           isDarkMode
-            ? require("../assets/backgrounds/dark.png")
-            : require("../assets/backgrounds/light.png")
+            ? require("../../assets/backgrounds/dark.png")
+            : require("../../assets/backgrounds/light.png")
         }
         style={StyleSheet.absoluteFillObject}
       />

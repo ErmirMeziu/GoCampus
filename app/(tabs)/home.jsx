@@ -11,7 +11,7 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../context/ThemeProvider";
+import { useTheme } from "../../context/ThemeProvider";
 import { GlassView } from "expo-glass-effect";
 
 export default function HomeScreen() {
@@ -102,8 +102,8 @@ export default function HomeScreen() {
       <ImageBackground
         source={
           isDarkMode
-            ? require("../assets/backgrounds/dark.png")
-            : require("../assets/backgrounds/light.png")
+            ? require("../../assets/backgrounds/dark.png")
+            : require("../../assets/backgrounds/light.png")
         }
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"

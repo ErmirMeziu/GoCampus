@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GlassView } from "expo-glass-effect";
-import { useTheme } from "../context/ThemeProvider";
+import { useTheme } from "../../context/ThemeProvider";
 
 const { width, height } = Dimensions.get("window");
 
@@ -45,7 +45,7 @@ export default function LeaderboardScreen() {
 
         <View style={styles.podiumContainer}>
           <Image
-            source={require("../assets/img/podiumRank.png")}
+            source={require("../../assets/img/podiumRank.png")}
             style={styles.podiumImage}
             resizeMode="contain"
           />

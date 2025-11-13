@@ -3,10 +3,10 @@ import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Alert } fr
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../context/ThemeProvider";
-import { handleSaveProfile, handleLogout } from "../components/ProfileActions";
-import SettingsList from "../components/SettingsList";
-import EditSettingModal from "../components/EditSettingModal";
+import { useTheme } from "../../context/ThemeProvider";
+import { handleSaveProfile, handleLogout } from "../../components/ProfileActions";
+import SettingsList from "../../components/SettingsList";
+import EditSettingModal from "../../components/EditSettingModal";
 import { GlassView } from "expo-glass-effect";
 
 export default function ProfileScreen() {

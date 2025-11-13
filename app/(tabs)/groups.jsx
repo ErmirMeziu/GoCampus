@@ -13,13 +13,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
 import * as ImagePicker from "expo-image-picker";
-import { useTheme } from "../context/ThemeProvider";
+import { useTheme } from "../../context/ThemeProvider";
 
-import EditGroupModal from "../components/EditGroupModal";
-import CreateGroupModal from "../components/CreateGroupModal";
-import CreateEventModal from "../components/CreateEventModal";
-import GroupDetail from "../components/GroupDetail";
-import EventCard from "../components/EventCard";
+import EditGroupModal from "../../components/EditGroupModal";
+import CreateGroupModal from "../../components/CreateGroupModal";
+import CreateEventModal from "../../components/CreateEventModal";
+import GroupDetail from "../../components/GroupDetail";
+import EventCard from "../../components/EventCard";
 
 
 const SEED_GROUPS = [
@@ -305,7 +305,7 @@ export default function GroupsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ImageBackground
-        source={isDarkMode ? require("../assets/backgrounds/dark.png") : require("../assets/backgrounds/light.png")}
+        source={isDarkMode ? require("../../assets/backgrounds/dark.png") : require("../../assets/backgrounds/light.png")}
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
       />
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   headerBtn: { padding: 6, marginLeft: 8 },
 
   filterHeader: { marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 12, marginBottom: 10 },
-  searchRow: { flexDirection: "row", alignItems: "center", gap: 8},
+  searchRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   searchInput: { flex: 1, fontSize: 14 },
 
   categoriesWrap: { flexDirection: "row", flexWrap: "wrap", alignSelf: "center" },
