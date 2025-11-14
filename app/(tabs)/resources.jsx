@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,36 +13,32 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
 import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "../../context/ThemeProvider";
-
 import CreateResourceModal from "../../components/CreateResourceModal";
 
-const CATEGORY_CHIPS = ["All", "Notes", "Books", "Equipment"];
+// FIREBASE IMPORTS
+import {
+  listenAllResources,
+  createResource,
+  updateResource,
+  deleteResource,
+  getResourcesByType,
+  getAllResources,
+  searchResources,
+} from "../../firebase/resources";
 
-const SEED_SHARED = [
-  {
-    id: "r2",
-    resourceType: "Equipment",
-    title: "Lab Microscope",
-    description: "Available for 3 days.",
-    condition: "Good",
-    borrowDuration: "3",
-    images: [
-      "https://images.unsplash.com/photo-1593642532400-2682810df593?w=800&q=80",
-    ],
-    owner: "others",
-  },
-];
+import { auth } from "../../firebase/config";
+
+const CATEGORY_CHIPS = ["All", "Notes", "Books", "Equipment"];
 
 export default function ResourceSharingScreen() {
   const { theme, isDarkMode } = useTheme();
 
-  const [myResources, setMyResources] = useState([]);
-  const [sharedResources, setSharedResources] = useState(SEED_SHARED);
-
+  const [resources, setResources] = useState([]);
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("All");
 
@@ -59,6 +55,7 @@ export default function ResourceSharingScreen() {
     setTimeout(() => setRefreshing(false), 600);
   }, []);
 
+  // MULTI IMAGE PICKER
   const pickImagesMulti = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -69,77 +66,67 @@ export default function ResourceSharingScreen() {
     return (res?.assets || []).map((a) => a.uri);
   };
 
-  const allResources = useMemo(() => {
-    const combined = [
-      ...myResources.map((r) => ({ ...r, owner: "me" })),
-      ...sharedResources,
-    ];
-    const q = query.trim().toLowerCase();
-    return combined.filter((r) => {
-      const catOk = activeCat === "All" || r.resourceType === activeCat;
-      const qOk =
-        !q ||
-        r.title.toLowerCase().includes(q) ||
-        r.description.toLowerCase().includes(q);
-      return catOk && qOk;
+  // REAL-TIME FIREBASE LISTENER
+  useEffect(() => {
+    const unsub = listenAllResources((list) => {
+      setResources(list);
     });
-  }, [myResources, sharedResources, query, activeCat]);
 
-  const myCarousel = useMemo(() => myResources, [myResources]);
+    return () => unsub();
+  }, []);
 
-  const handleCreate = (payload) => {
-    const res = { id: `r${Date.now()}`, ...payload, owner: "me" };
-    setMyResources((prev) => [res, ...prev]);
+  // CATEGORY FILTER — SERVER SIDE
+  const handleCategoryChange = async (cat) => {
+    setActiveCat(cat);
+
+    if (cat === "All") {
+      const all = await getAllResources();
+      setResources(all);
+    } else {
+      const filtered = await getResourcesByType(cat);
+      setResources(filtered);
+    }
+  };
+
+  // SEARCH — SERVER SIDE
+  const handleSearch = async (text) => {
+    setQuery(text);
+
+    if (!text.trim()) {
+      setResources(await getAllResources());
+      return;
+    }
+
+    const results = await searchResources(text);
+    setResources(results);
+  };
+
+  // CREATE RESOURCE — SAVE TO FIREBASE
+  const handleCreate = async (payload) => {
+    await createResource({
+      ...payload,
+      ownerId: auth.currentUser.uid,
+      ownerName: auth.currentUser.displayName,
+      ownerPhoto: auth.currentUser.photoURL,
+    });
+
     setCreateVisible(false);
   };
 
-  const handleEditSave = (updated) => {
-    setMyResources((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+  // UPDATE RESOURCE
+  const handleEditSave = async (updated) => {
+    await updateResource(updated.id, updated);
     setEditVisible(false);
     setEditTarget(null);
   };
 
-  const handleDelete = (id) => {
-    setMyResources((prev) => prev.filter((r) => r.id !== id));
+  // DELETE RESOURCE
+  const handleDeleteResource = async (id) => {
+    await deleteResource(id);
     setEditVisible(false);
   };
 
-  const renderMyMini = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => {
-        setEditTarget(item);
-        setEditVisible(true);
-      }}
-    >
-      <GlassView
-        glassEffectStyle="clear"
-        intensity={50}
-        style={[styles.miniCard, { backgroundColor: theme.card }]}
-      >
-        <Image
-          source={{
-            uri:
-              item.images?.[0] ||
-              "https://images.unsplash.com/photo-1505666287802-931dc83948e1?w=800&q=80",
-          }}
-          style={styles.miniCover}
-        />
-        <View style={{ padding: 10 }}>
-          <Text style={[styles.miniTitle, { color: theme.textPrimary }]} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
-            <Ionicons name="pricetag-outline" size={12} color={theme.textMuted} />
-            <Text style={[styles.miniMeta, { color: theme.textMuted }]}>
-              {" "}
-              {item.resourceType}
-            </Text>
-          </View>
-        </View>
-      </GlassView>
-    </TouchableOpacity>
-  );
-
+  // 🔥 RENDER CARD (updated with owner photo + name)
   const renderCard = ({ item }) => (
     <GlassView
       glassEffectStyle="clear"
@@ -154,12 +141,16 @@ export default function ResourceSharingScreen() {
         }}
         style={styles.cardImage}
       />
+
       <View style={styles.cardBody}>
+        {/* HEADER: TITLE + OWNER CONTROLS */}
         <View style={styles.cardHeader}>
           <Text style={[styles.cardTitle, { color: theme.textPrimary }]} numberOfLines={1}>
             {item.title}
           </Text>
-          {item.owner === "me" && (
+
+          {/* SHOW EDIT + DELETE ONLY IF OWNER */}
+          {item.ownerId === auth.currentUser.uid && (
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity
                 onPress={() => {
@@ -169,23 +160,50 @@ export default function ResourceSharingScreen() {
               >
                 <Ionicons name="create-outline" size={18} color={theme.primary} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDelete(item.id)} style={{ marginLeft: 8 }}>
+
+              <TouchableOpacity
+                onPress={() => handleDeleteResource(item.id)}
+                style={{ marginLeft: 8 }}
+              >
                 <Ionicons name="trash-outline" size={18} color={theme.danger || "red"} />
               </TouchableOpacity>
             </View>
           )}
         </View>
 
+        {/* OWNER INFO */}
+        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+          {item.ownerPhoto && (
+            <Image
+              source={{ uri: item.ownerPhoto }}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                marginRight: 6,
+                borderWidth: 1,
+                borderColor: theme.border,
+              }}
+            />
+          )}
+          <Text style={{ color: theme.textMuted, fontSize: 12 }}>
+            {item.ownerName || "Unknown User"}
+          </Text>
+        </View>
+
+        {/* DESCRIPTION */}
         <Text style={[styles.cardDesc, { color: theme.textMuted }]} numberOfLines={2}>
           {item.description}
         </Text>
 
+        {/* EQUIPMENT INFO */}
         {item.resourceType === "Equipment" && (
           <Text style={[styles.cardInfo, { color: theme.textPrimary }]}>
             {item.condition} • {item.borrowDuration} days
           </Text>
         )}
 
+        {/* IMAGE PREVIEW LIST */}
         {item.images?.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
             {item.images.map((uri, idx) => (
@@ -210,34 +228,38 @@ export default function ResourceSharingScreen() {
         style={StyleSheet.absoluteFillObject}
       />
 
+      {/* HEADER */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>Resources</Text>
+
         <TouchableOpacity onPress={() => setCreateVisible(true)}>
-          <Ionicons style={{padding:6,}} name="add-circle-outline" size={22} color={theme.primary} />
+          <Ionicons style={{ padding: 6 }} name="add-circle-outline" size={22} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
+      {/* SEARCH BAR */}
       <GlassView intensity={60} style={[styles.searchBar, { backgroundColor: theme.card }]}>
         <Ionicons name="search" size={16} color={theme.textMuted} />
         <TextInput
           placeholder="Search resources..."
           placeholderTextColor={theme.textMuted}
           value={query}
-          onChangeText={setQuery}
+          onChangeText={handleSearch}
           style={[styles.searchInput, { color: theme.textPrimary }]}
         />
         {query.length > 0 && (
-          <TouchableOpacity onPress={() => setQuery("")}>
+          <TouchableOpacity onPress={() => handleSearch("")}>
             <Ionicons name="close-circle" size={18} color={theme.textMuted} />
           </TouchableOpacity>
         )}
       </GlassView>
 
+      {/* CATEGORY BUTTONS */}
       <View style={styles.categories}>
         {CATEGORY_CHIPS.map((c) => (
           <TouchableOpacity
             key={c}
-            onPress={() => setActiveCat(c)}
+            onPress={() => handleCategoryChange(c)}
             style={[
               styles.chip,
               {
@@ -258,31 +280,17 @@ export default function ResourceSharingScreen() {
         ))}
       </View>
 
+      {/* MAIN FEED LIST */}
       <FlatList
-        data={allResources}
+        data={resources}
         keyExtractor={(i) => i.id}
         renderItem={renderCard}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 16 }}
-        ListHeaderComponent={
-          myCarousel.length > 0 && (
-            <View style={{ marginTop: 10 }}>
-              <Text style={[styles.section, { color: theme.textPrimary }]}>My Resources</Text>
-              <FlatList
-                horizontal
-                data={myCarousel}
-                keyExtractor={(i) => i.id}
-                renderItem={renderMyMini}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: 16 }}
-              />
-              <Text style={[styles.section, { color: theme.textPrimary }]}>All Resources</Text>
-            </View>
-          )
-        }
       />
 
+      {/* FULLSCREEN IMAGE VIEW */}
       <Modal visible={imageModalVisible} transparent onRequestClose={() => setImageModalVisible(false)}>
         <Pressable style={styles.lightbox} onPress={() => setImageModalVisible(false)}>
           {selectedImage && (
@@ -291,6 +299,7 @@ export default function ResourceSharingScreen() {
         </Pressable>
       </Modal>
 
+      {/* CREATE MODAL */}
       {createVisible && (
         <CreateResourceModal
           visible
@@ -300,6 +309,8 @@ export default function ResourceSharingScreen() {
           theme={theme}
         />
       )}
+
+      {/* EDIT MODAL */}
       {editVisible && editTarget && (
         <CreateResourceModal
           visible
@@ -307,7 +318,7 @@ export default function ResourceSharingScreen() {
           initialData={editTarget}
           onClose={() => setEditVisible(false)}
           onSave={handleEditSave}
-          onDelete={() => handleDelete(editTarget.id)}
+          onDelete={() => handleDeleteResource(editTarget.id)}
           pickImages={pickImagesMulti}
           theme={theme}
         />
@@ -316,19 +327,16 @@ export default function ResourceSharingScreen() {
   );
 }
 
+// STYLING REMAINS EXACTLY AS YOU SENT
 const styles = StyleSheet.create({
-  container: { flex: 1 }, header: { marginTop: 45,paddingHorizontal: 16,flexDirection: "row",justifyContent: "space-between",alignItems: "center",},
+  container: { flex: 1 },
+  header: { marginTop: 45, paddingHorizontal: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   title: { fontSize: 24, fontWeight: "700" },
-  searchBar: {flexDirection: "row",alignItems: "center", borderRadius: 16,paddingHorizontal: 12,paddingVertical: 10,margin: 16,gap: 8,minHeight:41,bottom:4,},
-  searchInput: { flex: 1, fontSize: 14},
-  categories: {flexDirection: "row",flexWrap: "wrap",justifyContent: "center",marginBottom: 0,bottom:5, },
-  chip: {paddingHorizontal: 12,paddingVertical: 8,borderRadius: 20,marginHorizontal: 4,marginBottom: 6,borderWidth: 1,},
+  searchBar: { flexDirection: "row", alignItems: "center", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, margin: 16, gap: 8, minHeight: 41, bottom: 4 },
+  searchInput: { flex: 1, fontSize: 14 },
+  categories: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginBottom: 0, bottom: 5 },
+  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, marginHorizontal: 4, marginBottom: 6, borderWidth: 1 },
   section: { fontSize: 16, fontWeight: "700", marginVertical: 8 },
-
-  miniCard: { width: 160, borderRadius: 16, overflow: "hidden", marginRight: 12 },
-  miniCover: { width: "100%", height: 86 },
-  miniTitle: { fontSize: 13, fontWeight: "700" },
-  miniMeta: { fontSize: 11 },
 
   card: { borderRadius: 18, overflow: "hidden", marginBottom: 14 },
   cardImage: { width: "100%", height: 140 },
@@ -339,5 +347,5 @@ const styles = StyleSheet.create({
   cardInfo: { fontSize: 12, marginTop: 4 },
   preview: { width: 110, height: 80, borderRadius: 12, marginRight: 8 },
 
-  lightbox: {flex: 1, backgroundColor: "rgba(0,0,0,0.9)",justifyContent: "center", alignItems: "center",},
+  lightbox: { flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" },
 });
