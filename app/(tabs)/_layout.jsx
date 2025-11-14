@@ -1,4 +1,4 @@
-// app/(tabs)/_layout.jsx
+
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";

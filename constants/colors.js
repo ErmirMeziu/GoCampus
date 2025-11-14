@@ -1,4 +1,5 @@
 export const Colors = {
+    
     light: {
         background: "#FFFFFF",
         textPrimary: "#000000",
@@ -55,3 +56,5 @@ export const Colors = {
         iconColor: "#CCCCCC",
     },
 };
+
+

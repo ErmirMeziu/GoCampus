@@ -1,5 +1,4 @@
-// app/(auth)/welcome.jsx
-import React from "react";
+
 import {
   View,
   Text,
@@ -10,9 +9,8 @@ import {
   ImageBackground,
   StatusBar,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../context/ThemeProvider";   // FIXED
-import { GlassView } from "expo-glass-effect";
+import { useTheme } from "../../context/ThemeProvider";
+
 import { router } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
@@ -24,8 +22,8 @@ export default function WelcomeScreen() {
     <ImageBackground
       source={
         isDarkMode
-          ? require("../../assets/backgrounds/dark.png")   // FIXED PATH
-          : require("../../assets/backgrounds/light.png")  // FIXED PATH
+          ? require("../../assets/backgrounds/dark.png")
+          : require("../../assets/backgrounds/light.png")
       }
       style={styles.background}
       resizeMode="cover"
@@ -38,52 +36,48 @@ export default function WelcomeScreen() {
 
       <View style={styles.container}>
 
-        {/* Logo */}
-        <GlassView intensity={50} style={styles.logoContainer}>
+        <View intensity={50} style={[styles.logoContainer, { borderColor: theme.primary }]}>
           <Image
-            source={require("../../assets/img/gocampus.png")}  // FIXED PATH
+            source={require("../../assets/img/gocampus.png")}
             style={styles.logo}
             resizeMode="contain"
           />
-        </GlassView>
+        </View>
 
-        {/* Title */}
+
         <Text style={[styles.title, { color: theme.textPrimary }]}>
           GoCampus
         </Text>
 
-        {/* Description */}
         <Text style={[styles.description, { color: theme.textMuted }]}>
           Connect, learn, and grow with your campus community. Discover events,
           join study groups, and stay updated — all in one place.
         </Text>
 
-        {/* Buttons */}
         <View style={styles.buttonContainer}>
 
-          {/* LOGIN */}
+
           <TouchableOpacity
             style={[styles.loginBtn, { backgroundColor: theme.primary }]}
-            onPress={() => router.push("/login")}   // FIXED
+            onPress={() => router.push("/login")}   
           >
             <Text style={styles.loginBtnText}>Log In</Text>
           </TouchableOpacity>
 
-          {/* REGISTER */}
           <TouchableOpacity
             style={[styles.registerBtn, { borderColor: theme.primary }]}
-            onPress={() => router.push("/register")}  // FIXED
+            onPress={() => router.push("/register")}  
           >
-            <Text style={[styles.registerBtnText, { color: theme.primary }]}>
+            <Text style={styles.registerBtnText}>
               Register
             </Text>
           </TouchableOpacity>
 
         </View>
 
-        {/* Footer */}
+
         <Text style={[styles.tagline, { color: theme.textMuted }]}>
-          Your campus, your network.
+          Your campus, your network.™
         </Text>
       </View>
     </ImageBackground>
@@ -113,12 +107,13 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.2)",
+
     backgroundColor: "white",
   },
   logo: {
     width: 80,
     height: 80,
+    backgroundColor: "white",
   },
   title: {
     fontSize: 34,
@@ -157,6 +152,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   registerBtnText: {
+    color: "#fff",
     fontSize: 17,
     fontWeight: "600",
   },

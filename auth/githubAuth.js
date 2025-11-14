@@ -1,4 +1,4 @@
-// auth/githubAuth.js
+
 import {
   GithubAuthProvider,
   signInWithPopup,
@@ -14,9 +14,7 @@ export const loginWithGitHub = async () => {
     const result = await signInWithPopup(auth, provider);
     return { ok: true, user: result.user };
   } catch (err) {
-    // --------------------------
-    // 🔥 EMAIL EXISTS WITH PASSWORD
-    // --------------------------
+  
     if (err.code === "auth/account-exists-with-different-credential") {
       const email = err.customData?.email;
 
@@ -33,7 +31,6 @@ export const loginWithGitHub = async () => {
       }
     }
 
-    // default error
     return { ok: false, error: err.message };
   }
 };

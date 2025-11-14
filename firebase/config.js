@@ -1,4 +1,4 @@
-// firebase/config.js
+
 import { initializeApp } from "firebase/app";
 import {
   initializeAuth,
@@ -9,7 +9,6 @@ import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { getFirestore } from "firebase/firestore";
 import { Platform } from "react-native";
 
-// 🔥 Your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBZgkUBCKKmkUgmNqKmN2k3eDHEapqxz4o",
   authDomain: "gocampus-1892d.firebaseapp.com",
@@ -21,14 +20,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// 📱 Mobile: use AsyncStorage persistence
 let auth;
 if (Platform.OS === "ios" || Platform.OS === "android") {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(ReactNativeAsyncStorage),
   });
 } else {
-  // 🌐 Web: normal getAuth
   auth = getAuth(app);
 }
 
