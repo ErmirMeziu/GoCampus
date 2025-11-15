@@ -13,14 +13,15 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
-import * as ImagePicker from "expo-image-picker";
+
 import { useTheme } from "../../context/ThemeProvider";
+
+import { pickImages, restoreImages, cleanData } from "../../utils/imageUtils";
+
 import CreateResourceModal from "../../components/CreateResourceModal";
 
-// FIREBASE IMPORTS
 import {
   listenAllResources,
   createResource,
@@ -50,83 +51,71 @@ export default function ResourceSharingScreen() {
   const [selectedImage, setSelectedImage] = useState(null);
 
   const [refreshing, setRefreshing] = useState(false);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 600);
+    setTimeout(() => setRefreshing(false), 500);
   }, []);
 
-  // MULTI IMAGE PICKER
-  const pickImagesMulti = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      quality: 0.8,
-    });
-    if (res?.canceled) return [];
-    return (res?.assets || []).map((a) => a.uri);
-  };
+  const pickImagesMulti = () => pickImages(true);
 
-  // REAL-TIME FIREBASE LISTENER
   useEffect(() => {
-    const unsub = listenAllResources((list) => {
-      setResources(list);
-    });
-
+    const unsub = listenAllResources((list) =>
+      setResources(list.map((i) => ({ ...i, images: restoreImages(i.images) })))
+    );
     return () => unsub();
   }, []);
 
-  // CATEGORY FILTER — SERVER SIDE
   const handleCategoryChange = async (cat) => {
     setActiveCat(cat);
+    const data =
+      cat === "All" ? await getAllResources() : await getResourcesByType(cat);
 
-    if (cat === "All") {
-      const all = await getAllResources();
-      setResources(all);
-    } else {
-      const filtered = await getResourcesByType(cat);
-      setResources(filtered);
-    }
+    setResources(data.map((r) => ({ ...r, images: restoreImages(r.images) })));
   };
 
-  // SEARCH — SERVER SIDE
   const handleSearch = async (text) => {
     setQuery(text);
 
     if (!text.trim()) {
-      setResources(await getAllResources());
+      handleCategoryChange(activeCat);
       return;
     }
 
     const results = await searchResources(text);
-    setResources(results);
+
+    setResources(results.map((r) => ({ ...r, images: restoreImages(r.images) })));
   };
 
-  // CREATE RESOURCE — SAVE TO FIREBASE
-  const handleCreate = async (payload) => {
-    await createResource({
-      ...payload,
-      ownerId: auth.currentUser.uid,
-      ownerName: auth.currentUser.displayName,
-      ownerPhoto: auth.currentUser.photoURL,
+  const handleCreate = async (data) => {
+    let safe = cleanData({
+      ...data,
+      images: Array.isArray(data.images) ? data.images : [],
+      ownerId: auth.currentUser?.uid ?? "unknown",
+      ownerName: auth.currentUser?.displayName ?? "Unknown User",
+      ownerPhoto: auth.currentUser?.photoURL ?? null,
     });
 
+    await createResource(safe);
     setCreateVisible(false);
   };
 
-  // UPDATE RESOURCE
   const handleEditSave = async (updated) => {
-    await updateResource(updated.id, updated);
+    let safe = cleanData({
+      ...updated,
+      images: Array.isArray(updated.images) ? updated.images : [],
+    });
+
+    await updateResource(updated.id, safe);
     setEditVisible(false);
     setEditTarget(null);
   };
 
-  // DELETE RESOURCE
   const handleDeleteResource = async (id) => {
     await deleteResource(id);
     setEditVisible(false);
   };
 
-  // 🔥 RENDER CARD (updated with owner photo + name)
   const renderCard = ({ item }) => (
     <GlassView
       glassEffectStyle="clear"
@@ -134,22 +123,22 @@ export default function ResourceSharingScreen() {
       style={[styles.card, { backgroundColor: theme.card }]}
     >
       <Image
-        source={{
-          uri:
-            item.images?.[0] ||
-            "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?w=800&q=80",
-        }}
+        source={
+          item.images?.length
+            ? { uri: item.images[0].uri }
+            : {
+                uri: "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?w=800&q=80",
+              }
+        }
         style={styles.cardImage}
       />
 
       <View style={styles.cardBody}>
-        {/* HEADER: TITLE + OWNER CONTROLS */}
         <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle, { color: theme.textPrimary }]} numberOfLines={1}>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
             {item.title}
           </Text>
 
-          {/* SHOW EDIT + DELETE ONLY IF OWNER */}
           {item.ownerId === auth.currentUser.uid && (
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity
@@ -162,16 +151,15 @@ export default function ResourceSharingScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => handleDeleteResource(item.id)}
                 style={{ marginLeft: 8 }}
+                onPress={() => handleDeleteResource(item.id)}
               >
-                <Ionicons name="trash-outline" size={18} color={theme.danger || "red"} />
+                <Ionicons name="trash-outline" size={18} color="red" />
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        {/* OWNER INFO */}
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
           {item.ownerPhoto && (
             <Image
@@ -187,28 +175,35 @@ export default function ResourceSharingScreen() {
             />
           )}
           <Text style={{ color: theme.textMuted, fontSize: 12 }}>
-            {item.ownerName || "Unknown User"}
+            {item.ownerName}
           </Text>
         </View>
 
-        {/* DESCRIPTION */}
-        <Text style={[styles.cardDesc, { color: theme.textMuted }]} numberOfLines={2}>
+        <Text
+          style={[styles.cardDesc, { color: theme.textMuted }]}
+          numberOfLines={2}
+        >
           {item.description}
         </Text>
 
-        {/* EQUIPMENT INFO */}
         {item.resourceType === "Equipment" && (
           <Text style={[styles.cardInfo, { color: theme.textPrimary }]}>
             {item.condition} • {item.borrowDuration} days
           </Text>
         )}
 
-        {/* IMAGE PREVIEW LIST */}
+        {/* Image previews */}
         {item.images?.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-            {item.images.map((uri, idx) => (
-              <Pressable key={idx} onPress={() => { setSelectedImage(uri); setImageModalVisible(true); }}>
-                <Image source={{ uri }} style={styles.preview} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {item.images.map((img, idx) => (
+              <Pressable
+                key={idx}
+                onPress={() => {
+                  setSelectedImage(img.uri);
+                  setImageModalVisible(true);
+                }}
+              >
+                <Image source={{ uri: img.uri }} style={styles.preview} />
               </Pressable>
             ))}
           </ScrollView>
@@ -228,16 +223,14 @@ export default function ResourceSharingScreen() {
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* HEADER */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>Resources</Text>
 
         <TouchableOpacity onPress={() => setCreateVisible(true)}>
-          <Ionicons style={{ padding: 6 }} name="add-circle-outline" size={22} color={theme.primary} />
+          <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* SEARCH BAR */}
       <GlassView intensity={60} style={[styles.searchBar, { backgroundColor: theme.card }]}>
         <Ionicons name="search" size={16} color={theme.textMuted} />
         <TextInput
@@ -254,7 +247,6 @@ export default function ResourceSharingScreen() {
         )}
       </GlassView>
 
-      {/* CATEGORY BUTTONS */}
       <View style={styles.categories}>
         {CATEGORY_CHIPS.map((c) => (
           <TouchableOpacity
@@ -280,7 +272,6 @@ export default function ResourceSharingScreen() {
         ))}
       </View>
 
-      {/* MAIN FEED LIST */}
       <FlatList
         data={resources}
         keyExtractor={(i) => i.id}
@@ -290,16 +281,18 @@ export default function ResourceSharingScreen() {
         contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 16 }}
       />
 
-      {/* FULLSCREEN IMAGE VIEW */}
-      <Modal visible={imageModalVisible} transparent onRequestClose={() => setImageModalVisible(false)}>
+      <Modal visible={imageModalVisible} transparent>
         <Pressable style={styles.lightbox} onPress={() => setImageModalVisible(false)}>
           {selectedImage && (
-            <Image source={{ uri: selectedImage }} style={{ width: "100%", height: "80%" }} resizeMode="contain" />
+            <Image
+              source={{ uri: selectedImage }}
+              style={{ width: "100%", height: "80%" }}
+              resizeMode="contain"
+            />
           )}
         </Pressable>
       </Modal>
 
-      {/* CREATE MODAL */}
       {createVisible && (
         <CreateResourceModal
           visible
@@ -310,7 +303,6 @@ export default function ResourceSharingScreen() {
         />
       )}
 
-      {/* EDIT MODAL */}
       {editVisible && editTarget && (
         <CreateResourceModal
           visible
@@ -327,25 +319,56 @@ export default function ResourceSharingScreen() {
   );
 }
 
-// STYLING REMAINS EXACTLY AS YOU SENT
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { marginTop: 45, paddingHorizontal: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  header: {
+    marginTop: 45,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   title: { fontSize: 24, fontWeight: "700" },
-  searchBar: { flexDirection: "row", alignItems: "center", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, margin: 16, gap: 8, minHeight: 41, bottom: 4 },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    margin: 16,
+    gap: 8,
+    minHeight: 41,
+  },
   searchInput: { flex: 1, fontSize: 14 },
-  categories: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginBottom: 0, bottom: 5 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, marginHorizontal: 4, marginBottom: 6, borderWidth: 1 },
-  section: { fontSize: 16, fontWeight: "700", marginVertical: 8 },
-
+  categories: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginHorizontal: 4,
+    marginBottom: 6,
+    borderWidth: 1,
+  },
   card: { borderRadius: 18, overflow: "hidden", marginBottom: 14 },
   cardImage: { width: "100%", height: 140 },
   cardBody: { padding: 12 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   cardTitle: { fontSize: 16, fontWeight: "700" },
   cardDesc: { fontSize: 13, marginTop: 6 },
   cardInfo: { fontSize: 12, marginTop: 4 },
   preview: { width: 110, height: 80, borderRadius: 12, marginRight: 8 },
-
-  lightbox: { flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" },
+  lightbox: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

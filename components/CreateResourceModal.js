@@ -38,7 +38,13 @@ export default function CreateResourceModal({
             setDescription(initialData.description || "");
             setCondition(initialData.condition || "Good");
             setBorrowDuration(initialData.borrowDuration || "");
-            setImages(initialData.images || []);
+
+            setImages(
+                (initialData.images || []).map((img) => ({
+                    base64: img.base64 ?? img,
+                    uri: img.uri ?? `data:image/jpeg;base64,${img}`,
+                }))
+            );
         } else {
             resetForm();
         }
@@ -59,44 +65,46 @@ export default function CreateResourceModal({
     };
 
     const addImages = async () => {
-        const uris = (await pickImages?.()) || [];
-        if (uris.length > 0) setImages((prev) => [...prev, ...uris]);
+        const picked = await pickImages?.();
+        if (!picked || picked.length === 0) return;
+        setImages((prev) => [...prev, ...picked]);
+        console.log("📸 PICKED IMAGES:", picked);
     };
 
-    const removeImage = (uri) => setImages((prev) => prev.filter((u) => u !== uri));
+    const removeImage = (uri) =>
+        setImages((prev) => prev.filter((img) => img.uri !== uri));
 
     const submit = () => {
-        if (!title.trim()) {
-            alert("⚠️ Please add a title.");
-            return;
-        }
-        if (!description.trim()) {
-            alert("⚠️ Please add a description.");
-            return;
-        }
+        if (!title.trim()) return alert("⚠️ Please add a title.");
+        if (!description.trim()) return alert("⚠️ Please add a description.");
+
         if (resourceType === "Equipment") {
-            if (images.length === 0) {
-                alert("⚠️ Please upload at least one image for Equipment.");
-                return;
-            }
+            if (images.length === 0)
+                return alert("⚠️ Please upload at least one image.");
             const duration = parseInt(borrowDuration, 10);
-            if (!duration || duration <= 0) {
-                alert("⚠️ Borrow duration must be a positive number.");
-                return;
-            }
+            if (!duration || duration <= 0)
+                return alert("⚠️ Borrow duration must be positive.");
         }
 
-        const resourceData = {
-            ...(initialData || {}),
+        let resourceData = {
             resourceType,
             title,
             description,
-            condition: resourceType === "Equipment" ? condition : undefined,
-            borrowDuration: resourceType === "Equipment" ? borrowDuration : undefined,
-            images,
+            images: images
+                .map((img) => img.base64)
+                .filter((b64) => typeof b64 === "string" && b64.length > 10),
         };
 
-        onSave?.(resourceData);
+        if (resourceType === "Equipment") {
+            resourceData.condition = condition;
+            resourceData.borrowDuration = borrowDuration;
+        }
+
+        onSave?.({
+            id: initialData?.id ?? null,
+            ...resourceData,
+        });
+
         resetForm();
     };
 
@@ -113,7 +121,6 @@ export default function CreateResourceModal({
         <Modal animationType="slide" transparent visible={visible} onRequestClose={close}>
             <View style={styles.overlay}>
                 <GlassView style={[styles.sheet, { backgroundColor: theme.overlay }]} intensity={95}>
-
                     <View style={styles.header}>
                         <Text style={[styles.title, { color: theme.textPrimary }]}>
                             {editMode ? "Edit Resource" : "Create Resource"}
@@ -149,6 +156,7 @@ export default function CreateResourceModal({
                     </View>
 
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
+                        
                         <Text style={[styles.label, { color: theme.textMuted }]}>Title</Text>
                         <TextInput
                             value={title}
@@ -204,7 +212,9 @@ export default function CreateResourceModal({
                                     ))}
                                 </View>
 
-                                <Text style={[styles.label, { color: theme.textMuted }]}>Max Borrow Duration (days)</Text>
+                                <Text style={[styles.label, { color: theme.textMuted }]}>
+                                    Max Borrow Duration (days)
+                                </Text>
                                 <TextInput
                                     placeholder="e.g. 3"
                                     placeholderTextColor={theme.textMuted}
@@ -217,7 +227,10 @@ export default function CreateResourceModal({
                         )}
 
                         <Text style={[styles.label, { color: theme.textMuted }]}>Images</Text>
-                        <TouchableOpacity style={[styles.imagePicker, { borderColor: theme.border }]} onPress={addImages}>
+                        <TouchableOpacity
+                            style={[styles.imagePicker, { borderColor: theme.border }]}
+                            onPress={addImages}
+                        >
                             <Ionicons name="images-outline" size={22} color={theme.textPrimary} />
                             <Text style={{ marginLeft: 8, color: theme.textPrimary, fontWeight: "600" }}>
                                 {images.length > 0 ? `Selected ${images.length} image(s)` : "Upload Images"}
@@ -226,10 +239,16 @@ export default function CreateResourceModal({
 
                         {images.length > 0 && (
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-                                {images.map((uri, idx) => (
+                                {images.map((img, idx) => (
                                     <View key={idx} style={styles.previewWrap}>
-                                        <Image source={{ uri }} style={styles.previewImage} />
-                                        <TouchableOpacity style={styles.removeBtn} onPress={() => removeImage(uri)}>
+                                        <Image
+                                            source={{ uri: `data:image/jpeg;base64,${img.base64}` }}
+                                            style={styles.previewImage}
+                                        />
+                                        <TouchableOpacity
+                                            style={styles.removeBtn}
+                                            onPress={() => removeImage(img.uri)}
+                                        >
                                             <Ionicons name="close-circle" size={18} color="#ff4444" />
                                         </TouchableOpacity>
                                     </View>
@@ -241,14 +260,19 @@ export default function CreateResourceModal({
                             {editMode && (
                                 <TouchableOpacity
                                     style={[styles.btn, { backgroundColor: theme.danger || "#cc4444" }]}
-                                    onPress={confirmDelete()}
+                                    onPress={confirmDelete}
                                 >
                                     <Text style={[styles.btnText, { color: "#fff" }]}>Delete</Text>
                                 </TouchableOpacity>
                             )}
-                            <TouchableOpacity style={[styles.btn, { backgroundColor: theme.card }]} onPress={close}>
+
+                            <TouchableOpacity
+                                style={[styles.btn, { backgroundColor: theme.card }]}
+                                onPress={close}
+                            >
                                 <Text style={[styles.btnText, { color: theme.textPrimary }]}>Cancel</Text>
                             </TouchableOpacity>
+
                             <TouchableOpacity
                                 style={[styles.btn, { backgroundColor: theme.primary }]}
                                 onPress={submit}
@@ -266,15 +290,35 @@ export default function CreateResourceModal({
 }
 
 const styles = StyleSheet.create({
-    overlay: {flex: 1, justifyContent: "flex-end",backgroundColor: "rgba(0,0,0,0.35)",},
-    sheet: {borderTopLeftRadius: 20,borderTopRightRadius: 20,padding: 16, maxHeight: "92%",},
-    header: {flexDirection: "row",alignItems: "center",justifyContent: "space-between", marginBottom: 8,},
+    overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.35)" },
+    sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, maxHeight: "92%" },
+    header: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
     title: { fontSize: 18, fontWeight: "700" },
     typesRow: { flexDirection: "row", flexWrap: "wrap", marginVertical: 8 },
-    typeChip: {paddingHorizontal: 12,paddingVertical: 8, borderRadius: 20, marginRight: 8, marginBottom: 8, borderWidth: 1,},
+    typeChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginRight: 8,
+        marginBottom: 8,
+        borderWidth: 1,
+    },
     label: { fontSize: 12, marginTop: 6, marginBottom: 6 },
-    input: {borderWidth: 1,borderRadius: 12,paddingHorizontal: 12,paddingVertical: 10,fontSize: 14, },
-    imagePicker: {borderWidth: 1,borderRadius: 12,paddingVertical: 12,paddingHorizontal: 12,flexDirection: "row",alignItems: "center",},
+    input: {
+        borderWidth: 1,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+    },
+    imagePicker: {
+        borderWidth: 1,
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+        flexDirection: "row",
+        alignItems: "center",
+    },
     previewWrap: { marginRight: 10, position: "relative" },
     previewImage: { width: 120, height: 90, borderRadius: 12 },
     removeBtn: { position: "absolute", top: -6, right: -6, backgroundColor: "#fff", borderRadius: 9 },

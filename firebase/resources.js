@@ -11,24 +11,15 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import { uploadImage } from "./storage";
 
 const RESOURCES = collection(db, "resources");
 
 export const createResource = async (payload) => {
   const cleaned = {};
+
   for (const key in payload) {
-    if (payload[key] !== undefined) {
+    if (payload[key] !== undefined && payload[key] !== null) {
       cleaned[key] = payload[key];
-    }
-  }
-
-  const imageUrls = [];
-
-  if (cleaned.images && cleaned.images.length > 0) {
-    for (let uri of cleaned.images) {
-      const url = await uploadImage(uri, "resources");
-      imageUrls.push(url);
     }
   }
 
@@ -42,7 +33,6 @@ export const getAllResources = async () => {
   const snap = await getDocs(query(RESOURCES, orderBy("createdAt", "desc")));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
-
 
 export const listenAllResources = (callback) => {
   return onSnapshot(
@@ -62,7 +52,6 @@ export const getResourcesByType = async (type) => {
   );
 
   const snap = await getDocs(q);
-
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
