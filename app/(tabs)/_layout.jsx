@@ -101,6 +101,16 @@ export default function TabsLayout() {
             />
 
             <Tabs.Screen
+                name="notes-ai"
+                options={{
+                    title: "AI Notes",
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="sparkles" size={20} color={color} />
+                    ),
+                }}
+            />
+
+            <Tabs.Screen
                 name="profile"
                 options={{
                     tabBarIcon: ({ size, color }) => (
