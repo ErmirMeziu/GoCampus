@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
     View,
@@ -20,6 +19,9 @@ import PasswordInput from "../../components/PasswordInput";
 
 import { loginWithEmail } from "../../auth/auth";
 import { loginWithGitHub } from "../../auth/githubAuth";
+
+// 🔥 ADDED
+import { createUserProfileIfNotExists } from "../../firebase/profile";
 
 const { width } = Dimensions.get("window");
 
@@ -61,12 +63,21 @@ export default function LoginScreen() {
                 return;
             }
 
+            // 🔥 CREATE PROFILE IF MISSING
+            await createUserProfileIfNotExists(
+                result.user.uid,
+                result.user.email,
+                result.user.displayName || ""
+            );
+
             setSuccessMsg("Login successful!");
             setTimeout(() => router.replace("/home"), 300);
+
         } finally {
             setLoading(false);
         }
     };
+
     const handleGitHubLogin = async () => {
         clearErrors();
         setSuccessMsg("");
@@ -76,15 +87,21 @@ export default function LoginScreen() {
         if (!result.ok) {
             setErrors((e) => ({
                 ...e,
-                github: friendlyError(result.error),   
+                github: friendlyError(result.error),
             }));
             return;
         }
 
+        // 🔥 CREATE PROFILE IF MISSING
+        await createUserProfileIfNotExists(
+            result.user.uid,
+            result.user.email,
+            result.user.displayName || ""
+        );
+
         setSuccessMsg("GitHub login successful!");
         setTimeout(() => router.replace("/home"), 300);
     };
-
 
     const isWeb = Platform.OS === "web";
 
@@ -111,7 +128,7 @@ export default function LoginScreen() {
                             placeholderTextColor={theme.textMuted}
                             style={[
                                 styles.input,
-                                { color: theme.textPrimary, borderColor: toOpacity(theme.textPrimary, 0.3), borderWidth: 1, },
+                                { color: theme.textPrimary, borderColor: toOpacity(theme.textPrimary, 0.3), borderWidth: 1 },
                                 errors.email && { borderWidth: 1, borderColor: "#ff4d4f" },
                             ]}
                             value={email}

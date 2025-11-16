@@ -35,10 +35,11 @@ export default function RegisterScreen() {
     const handleRegister = async () => {
         setError("");
         setLoading(true);
+          const loweredEmail = email.trim().toLowerCase();
 
         const validationError = validateRegistration(
             fullName,
-            email,
+            loweredEmail,
             password,
             confirm
         );
@@ -49,7 +50,7 @@ export default function RegisterScreen() {
             return;
         }
 
-        const result = await registerUser(email, password, fullName);
+        const result = await registerUser(loweredEmail, password, fullName);
 
         if (!result.ok) {
             setError(result.error);
@@ -60,6 +61,7 @@ export default function RegisterScreen() {
         setLoading(false);
         setTimeout(() => router.replace("/home"), 300);
     };
+    
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>

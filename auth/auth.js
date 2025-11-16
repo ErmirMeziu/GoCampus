@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 
 import { auth } from "../firebase/config";
-
+import { createUserProfileIfNotExists } from "../firebase/profile";
 
 export const mapAuthError = (code) => {
     if (code.includes("auth/user-not-found")) return "No account found with this email.";
@@ -91,14 +91,22 @@ export const validateRegistration = (fullName, email, password, confirm) => {
 export const registerUser = async (email, password, fullName) => {
     try {
         const result = await registerWithEmail(fullName, email, password);
-
+        if (result.ok) {
+            await createUserProfileIfNotExists(
+                result.user.uid,
+                email,
+                fullName
+            );
+        }
         return {
             ok: result.ok,
             user: result.user,
-            name: fullName,  
+            name: fullName,
             error: result.error,
         };
     } catch (err) {
         return { ok: false, error: String(err) };
     }
 };
+
+
