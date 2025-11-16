@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,53 +9,105 @@ import {
   TouchableOpacity,
   ImageBackground,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeProvider";
 import { GlassView } from "expo-glass-effect";
+import { auth, db } from "../../firebase/config";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
 
 export default function HomeScreen() {
   const screenWidth = Dimensions.get("window").width;
   const { theme, isDarkMode } = useTheme();
 
-  const events = [
-    {
-      id: "1",
-      title: "Hackathon 2025",
-      date: "Oct 20",
-      location: "Innovation Hall",
-      description: "Showcase your coding skills and build creative solutions with your peers.",
-      image:
-        "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?auto=format&fit=crop&w=1000&q=80",
-      likes: 128,
-      comments: 12,
-      isHot: true,
-    },
-    {
-      id: "2",
-      title: "Study Night",
-      date: "Oct 22",
-      location: "Library Hall B",
-      description: "Collaborative study session with music, snacks, and focus zones.",
-      image:
-        "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1000&q=80",
-      likes: 67,
-      comments: 8,
-      isHot: false,
-    },
-    {
-      id: "3",
-      title: "Campus Cleanup",
-      date: "Oct 25",
-      location: "Main Garden",
-      description: "Join our eco movement to keep the campus clean and green 🌱.",
-      image:
-        "https://images.unsplash.com/photo-1581579188871-45ea61f2a0c8?auto=format&fit=crop&w=1000&q=80",
-      likes: 89,
-      comments: 15,
-      isHot: true,
-    },
-  ];
+  const user = auth.currentUser;
+  const userName = user?.displayName || "Student";
+  const userId = user?.uid?.slice(0, 8) || "Unknown";
+
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    
+    const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setEvents(list);
+        setLoading(false);
+      },
+      (err) => {
+        setError(err.message || "Failed to load events");
+        setLoading(false);
+      }
+    );
+
+    return () => unsub();
+  }, []);
+
+  const createEvent = async () => {
+    setError("");
+    setSuccess("");
+    try {
+      await addDoc(collection(db, "events"), {
+        title: "New Campus Event",
+        date: "TBD",
+        location: "Campus",
+        description: "Created from app (demo).",
+        image: "https://picsum.photos/800/600",
+        likes: 0,
+        comments: 0,
+        isHot: false,
+        createdBy: user?.uid || null,
+        createdAt: serverTimestamp(),
+      });
+      setSuccess("Event added");
+      setTimeout(() => setSuccess(""), 2500);
+    } catch (err) {
+      setError(err.message || "Failed to add event");
+    }
+  };
+
+  const likeEvent = async (id, currentLikes = 0) => {
+    setError("");
+    setSuccess("");
+    try {
+      const eventRef = doc(db, "events", id);
+      await updateDoc(eventRef, { likes: (currentLikes || 0) + 1 });
+      setSuccess("Liked!");
+      setTimeout(() => setSuccess(""), 1500);
+    } catch (err) {
+      setError(err.message || "Failed to like event");
+    }
+  };
+
+  const deleteEvent = async (id) => {
+    setError("");
+    setSuccess("");
+    try {
+      await deleteDoc(doc(db, "events", id));
+      setSuccess("Event deleted");
+      setTimeout(() => setSuccess(""), 1500);
+    } catch (err) {
+      setError(err.message || "Failed to delete event");
+    }
+  };
 
   const posts = [
     {
@@ -107,7 +159,6 @@ export default function HomeScreen() {
         }
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
-
       />
 
       <View style={styles.header}>
@@ -116,60 +167,150 @@ export default function HomeScreen() {
             <Ionicons name="person" size={26} color={theme.textPrimary} />
           </GlassView>
           <View>
-            <Text style={[styles.profileName, { color: theme.textPrimary }]}>Ermir Meziu</Text>
-            <Text style={[styles.profileId, { color: theme.textMuted }]}>ID: 230756100</Text>
+            <Text style={[styles.profileName, { color: theme.textPrimary }]}>
+              {userName}
+            </Text>
+            <Text style={[styles.profileId, { color: theme.textMuted }]}>
+              ID: {userId}
+            </Text>
           </View>
         </View>
+
         <View style={styles.headerIcons}>
-          <Ionicons name="notifications-outline" size={22} color={theme.textPrimary} style={styles.icon} />
-          <Ionicons name="search-outline" size={22} color={theme.textPrimary} style={styles.icon} />
+          <TouchableOpacity onPress={createEvent} activeOpacity={0.8}>
+            <Ionicons
+              name="add-circle-outline"
+              size={24}
+              color={theme.textPrimary}
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+
+          <Ionicons
+            name="notifications-outline"
+            size={22}
+            color={theme.textPrimary}
+            style={styles.icon}
+          />
+          <Ionicons
+            name="search-outline"
+            size={22}
+            color={theme.textPrimary}
+            style={styles.icon}
+          />
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollArea}>
+      <View style={{ marginHorizontal: 16, marginTop: 6 }}>
+        {loading && (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ActivityIndicator size="small" />
+            <Text style={{ color: theme.textPrimary, marginLeft: 8 }}>
+              Loading events...
+            </Text>
+          </View>
+        )}
+        {!loading && error ? (
+          <Text style={{ color: "red" }}>{error}</Text>
+        ) : null}
+        {!loading && success ? (
+          <Text style={{ color: "green" }}>{success}</Text>
+        ) : null}
+      </View>
 
-        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Upcoming Events</Text>
+      <ScrollView contentContainerStyle={styles.scrollArea}>
+        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
+          Upcoming Events
+        </Text>
+
         <FlatList
           data={events}
           horizontal
-          renderItem={({ item }) => (
-            <TouchableOpacity activeOpacity={0.85} style={{ marginRight: 15 }}>
-              <GlassView intensity={50} style={styles.eventCard}>
-                <ImageBackground
-                  source={{ uri: item.image }}
-                  style={styles.eventImage}
-                  imageStyle={{ borderRadius: 15 }}
-                >
-                  {item.isHot && (
-                    <View style={styles.hotBadge}>
-                      <Ionicons name="flame" size={16} color="#fff" />
-                      <Text style={styles.hotText}>Hot</Text>
+          renderItem={({ item }) => {
+            const image =
+              item?.image ||
+              "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?auto=format&fit=crop&w=1000&q=80";
+            const title = item?.title || "Untitled event";
+            const date = item?.date || "TBD";
+            const location = item?.location || "Campus";
+            const description = item?.description || "";
+            const likes = typeof item?.likes === "number" ? item.likes : 0;
+            const isHot = !!item?.isHot;
+
+            return (
+              <TouchableOpacity activeOpacity={0.85} style={{ marginRight: 15 }}>
+                <GlassView intensity={50} style={styles.eventCard}>
+                  <ImageBackground
+                    source={{ uri: image }}
+                    style={styles.eventImage}
+                    imageStyle={{ borderRadius: 15 }}
+                  >
+                    {isHot && (
+                      <View style={styles.hotBadge}>
+                        <Ionicons name="flame" size={16} color="#fff" />
+                        <Text style={styles.hotText}>Hot</Text>
+                      </View>
+                    )}
+
+                    <View style={styles.eventOverlay}>
+                      <Text style={[styles.eventTitle, { color: theme.textPrimary }]}>
+                        {title}
+                      </Text>
+                      <Text style={{ color: theme.secondary, fontSize: 12 }}>
+                        📅 {date}
+                      </Text>
+                      <Text style={{ color: theme.textMuted, fontSize: 12 }}>
+                        📍 {location}
+                      </Text>
+                      <Text
+                        style={{ color: theme.textMuted, fontSize: 12, marginTop: 5 }}
+                        numberOfLines={2}
+                      >
+                        {description}
+                      </Text>
+
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          marginTop: 8,
+                          justifyContent: "flex-start",
+                          alignItems: "center",
+                        }}
+                      >
+                        <TouchableOpacity
+                          onPress={() => likeEvent(item.id, likes)}
+                          style={{ flexDirection: "row", alignItems: "center", marginRight: 12 }}
+                        >
+                          <Ionicons name="heart-outline" size={16} color="#fff" />
+                          <Text style={{ color: "#fff", marginLeft: 6 }}>{likes}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          onPress={() => deleteEvent(item.id)}
+                          style={{ flexDirection: "row", alignItems: "center" }}
+                        >
+                          <Ionicons name="trash" size={16} color="#fff" />
+                          <Text style={{ color: "#fff", marginLeft: 6 }}>Delete</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  )}
-                  <View style={styles.eventOverlay}>
-                    <Text style={[styles.eventTitle, { color: theme.textPrimary }]}>{item.title}</Text>
-                    <Text style={{ color: theme.secondary, fontSize: 12 }}>📅 {item.date}</Text>
-                    <Text style={{ color: theme.textMuted, fontSize: 12 }}>📍 {item.location}</Text>
-                    <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 5 }} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  </View>
-                </ImageBackground>
-              </GlassView>
-            </TouchableOpacity>
-          )}
+                  </ImageBackground>
+                </GlassView>
+              </TouchableOpacity>
+            );
+          }}
           keyExtractor={(item) => item.id}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16 }}
         />
 
-
-        <Text style={[styles.sectionTitle, { marginTop: 25, color: theme.textPrimary }]}>Campus Insights</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 25, color: theme.textPrimary }]}>
+          Campus Insights
+        </Text>
         <GlassView glassEffectStyle="clear" intensity={50} style={styles.insightsContainer}>
           <Text style={[styles.insightsSubtitle, { color: theme.textMuted }]}>
             Discover how active each study group is on campus — join one to boost your learning!
           </Text>
-
 
           {barData.labels.map((label, index) => {
             const value = barData.datasets[0].data[index];
@@ -177,18 +318,12 @@ export default function HomeScreen() {
               <View key={index} style={styles.groupRow}>
                 <Text style={{ color: theme.textPrimary, width: 50, fontSize: 12 }}>{label}</Text>
                 <View style={styles.groupBarBackground}>
-                  <View
-                    style={[
-                      styles.groupBarFill,
-                      { width: `${value}%`, backgroundColor: colors[index % colors.length] },
-                    ]}
-                  />
+                  <View style={[styles.groupBarFill, { width: `${value}%`, backgroundColor: colors[index % colors.length] }]} />
                 </View>
                 <Text style={{ color: theme.textPrimary, width: 30, fontSize: 12, textAlign: "right" }}>{value}</Text>
               </View>
             );
           })}
-
 
           <Text style={[styles.insightsLabel, { color: theme.textPrimary }]}>Top Performing Groups</Text>
           <View style={styles.topGroupsContainer}>
@@ -210,13 +345,11 @@ export default function HomeScreen() {
             ))}
           </View>
 
-
           <TouchableOpacity style={[styles.joinGroupButton, { backgroundColor: theme.primary }]}>
             <Ionicons name="people" size={18} color="#fff" />
             <Text style={styles.joinGroupText}>Explore Study Groups</Text>
           </TouchableOpacity>
         </GlassView>
-
 
         <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Recent Posts</Text>
         {posts.map((post) => (
@@ -295,3 +428,4 @@ const styles = StyleSheet.create({
   postReactions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 },
   reactionButton: { flexDirection: "row", alignItems: "center" },
 });
+
