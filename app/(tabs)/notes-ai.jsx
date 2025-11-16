@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "700",
     marginBottom: 10,
-    marginTop: 35,
+    marginTop: 70,
   },
 
   glassBox: {

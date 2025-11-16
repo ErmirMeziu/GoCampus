@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,30 +6,52 @@ import {
   Image,
   FlatList,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GlassView } from "expo-glass-effect";
 import { useTheme } from "../../context/ThemeProvider";
+import { db, auth } from "../../firebase/config";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 
-const { width, height } = Dimensions.get("window");
-
-const topUsers = [
-  { id: "2", name: "eron", points: 105, image: "https://randomuser.me/api/portraits/men/31.jpg" },
-  { id: "1", name: "alex", points: 146, image: "https://randomuser.me/api/portraits/women/40.jpg" },
-  { id: "3", name: "ranking", points: 99, image: "https://randomuser.me/api/portraits/men/70.jpg" },
-];
-
-const otherUsers = [
-  { id: "4", name: "kristian", points: 96, image: "https://randomuser.me/api/portraits/women/47.jpg" },
-  { id: "5", name: "mehmed", points: 88, image: "https://randomuser.me/api/portraits/men/50.jpg" },
-  { id: "6", name: "sebastian", points: 87, image: "https://randomuser.me/api/portraits/men/46.jpg" },
-  { id: "7", name: "valza", points: 85, image: "https://randomuser.me/api/portraits/women/68.jpg" },
-  { id: "8", name: "vlera", points: 80, image: "https://randomuser.me/api/portraits/women/61.jpg" },
-  { id: "9", name: "toni", points: 79, image: "https://randomuser.me/api/portraits/men/25.jpg" },
-];
+const { width } = Dimensions.get("window");
 
 export default function LeaderboardScreen() {
   const { theme } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const q = query(collection(db, "users"), orderBy("points", "desc"));
+
+    const unsub = onSnapshot(q, (snap) => {
+      const arr = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setUsers(arr);
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
+
+  const top3 = users.slice(0, 3);
+  const others = users.slice(3, 500); 
+
+  const currentUid = auth.currentUser?.uid;
+  const myIndex = users.findIndex((u) => u.id === currentUid);
+  const myRank = myIndex >= 0 ? myIndex + 1 : null;
+  const myUser = myIndex >= 0 ? users[myIndex] : null;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -50,64 +72,138 @@ export default function LeaderboardScreen() {
             resizeMode="contain"
           />
 
-          <View style={[styles.userContainer, { top: 30, left: width * 0.44 }]}>
-            <Image
-              source={{ uri: topUsers[1].image }}
-              style={[styles.avatar, { borderColor: theme.gold }]}
-            />
-            <View style={[styles.badgeContainer, { backgroundColor: theme.gold }]}>
-              <Text style={styles.badgeText}>1</Text>
+          {top3[0] && (
+            <View style={[styles.userContainer, { top: 30, left: width * 0.44 }]}>
+              <Image
+                source={{ uri: top3[0].photoURL || "https://i.pravatar.cc/300" }}
+                style={[styles.avatar, { borderColor: theme.gold }]}
+              />
+              <View
+                style={[styles.badgeContainer, { backgroundColor: theme.gold }]}
+              >
+                <Text style={styles.badgeText}>1</Text>
+              </View>
+              <Text style={[styles.name, { color: theme.textPrimary }]}>
+                {top3[0].name}
+              </Text>
+              <Text style={[styles.points, { color: theme.textMuted }]}>
+                🏆 {top3[0].points}
+              </Text>
             </View>
-            <Text style={[styles.name, { color: theme.textPrimary }]}>
-              {topUsers[1].name}
-            </Text>
-            <Text style={[styles.points, { color: theme.textMuted }]}>
-              🏆 {topUsers[1].points}
-            </Text>
-          </View>
+          )}
 
-          <View style={[styles.userContainer, { top: 86, left: width * 0.15 }]}>
-            <Image
-              source={{ uri: topUsers[0].image }}
-              style={[styles.avatar, { borderColor: theme.silver }]}
-            />
-            <View style={[styles.badgeContainer, { backgroundColor: theme.silver }]}>
-              <Text style={styles.badgeText}>2</Text>
+          {top3[1] && (
+            <View style={[styles.userContainer, { top: 86, left: width * 0.15 }]}>
+              <Image
+                source={{ uri: top3[1].photoURL || "https://i.pravatar.cc/300" }}
+                style={[styles.avatar, { borderColor: theme.silver }]}
+              />
+              <View
+                style={[styles.badgeContainer, { backgroundColor: theme.silver }]}
+              >
+                <Text style={styles.badgeText}>2</Text>
+              </View>
+              <Text style={[styles.name, { color: theme.textPrimary }]}>
+                {top3[1].name}
+              </Text>
+              <Text style={[styles.points, { color: theme.textMuted }]}>
+                {top3[1].points}
+              </Text>
             </View>
-            <Text style={[styles.name, { color: theme.textPrimary }]}>
-              {topUsers[0].name}
-            </Text>
-            <Text style={[styles.points, { color: theme.textMuted }]}>
-              {topUsers[0].points}
-            </Text>
-          </View>
+          )}
 
-          <View style={[styles.userContainer, { top: 119, right: width * 0.1 }]}>
-            <Image
-              source={{ uri: topUsers[2].image }}
-              style={[styles.avatar, { borderColor: theme.bronze }]}
-            />
-            <View style={[styles.badgeContainer, { backgroundColor: theme.bronze }]}>
-              <Text style={styles.badgeText}>3</Text>
+          {top3[2] && (
+            <View style={[styles.userContainer, { top: 119, right: width * 0.1 }]}>
+              <Image
+                source={{ uri: top3[2].photoURL || "https://i.pravatar.cc/300" }}
+                style={[styles.avatar, { borderColor: theme.bronze }]}
+              />
+              <View
+                style={[styles.badgeContainer, { backgroundColor: theme.bronze }]}
+              >
+                <Text style={styles.badgeText}>3</Text>
+              </View>
+              <Text style={[styles.name, { color: theme.textPrimary }]}>
+                {top3[2].name}
+              </Text>
+              <Text style={[styles.points, { color: theme.textMuted }]}>
+                {top3[2].points}
+              </Text>
             </View>
-            <Text style={[styles.name, { color: theme.textPrimary }]}>
-              {topUsers[2].name}
-            </Text>
-            <Text style={[styles.points, { color: theme.textMuted }]}>
-              {topUsers[2].points}
-            </Text>
-          </View>
+          )}
         </View>
 
+        {myUser && (
+          <View
+            style={{
+              backgroundColor: "transparent",
+              width: "88%",
+              padding: 14,
+              borderRadius: 16,
+              marginBottom: 14,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text
+                style={{
+                  color: theme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: "700",
+                  marginRight: 12,
+                }}
+              >
+                #{myRank}
+              </Text>
+
+              <Image
+                source={{
+                  uri: myUser.photoURL || "https://i.pravatar.cc/300",
+                }}
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 23,
+                  marginRight: 10,
+                }}
+              />
+
+              <View>
+                <Text
+                  style={{
+                    color: theme.textPrimary,
+                    fontSize: 15,
+                    fontWeight: "600",
+                  }}
+                >
+                  {myUser.name || "You"}
+                </Text>
+                <Text style={{ color: theme.textMuted, fontSize: 13 }}>
+                  {myUser.points || 0} pts
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         <GlassView
-          style={[styles.glassCard, { backgroundColor: theme.card }]}
+          style={[
+            styles.glassCard,
+            {
+              backgroundColor: theme.card,
+              height: 270, 
+            },
+          ]}
           intensity={70}
           blurAmount={20}
           tint="systemUltraThinMaterialLight"
         >
           <FlatList
-            data={otherUsers}
+            data={others}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             renderItem={({ item, index }) => (
@@ -115,15 +211,24 @@ export default function LeaderboardScreen() {
                 style={[
                   styles.cardRow,
                   { borderBottomColor: theme.border },
-                  index === otherUsers.length - 1 && { borderBottomWidth: 0 },
+                  index === others.length - 1 && { borderBottomWidth: 0 },
                 ]}
               >
                 <View style={styles.rowLeft}>
                   <Text style={[styles.rankNumber, { color: theme.textMuted }]}>
                     {index + 4}
                   </Text>
-                  <Image source={{ uri: item.image }} style={styles.listAvatar} />
-                  <Text style={[styles.listName, { color: theme.textPrimary }]}>
+
+                  <Image
+                    source={{
+                      uri: item.photoURL || "https://i.pravatar.cc/300",
+                    }}
+                    style={styles.listAvatar}
+                  />
+
+                  <Text
+                    style={[styles.listName, { color: theme.textPrimary }]}
+                  >
                     {item.name}
                   </Text>
                 </View>
@@ -135,7 +240,9 @@ export default function LeaderboardScreen() {
                     }}
                     style={[styles.pointsIcon, { tintColor: theme.gold }]}
                   />
-                  <Text style={[styles.listPoints, { color: theme.textPrimary }]}>
+                  <Text
+                    style={[styles.listPoints, { color: theme.textPrimary }]}
+                  >
                     {item.points}
                   </Text>
                 </View>
@@ -151,22 +258,69 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   gradient: { flex: 1, alignItems: "center" },
-  headerText: {alignSelf: "flex-start",left: 20,position: "absolute",fontSize: 22, fontWeight: "700",marginTop: 60,marginBottom: 8,},
-  podiumContainer: {width: "100%",height: 370,alignItems: "center",justifyContent: "center",position: "relative",marginTop: 55,},
+  headerText: {
+    alignSelf: "flex-start",
+    left: 20,
+    position: "absolute",
+    fontSize: 22,
+    fontWeight: "700",
+    marginTop: 60,
+  },
+  podiumContainer: {
+    width: "100%",
+    height: 370,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    marginTop: 55,
+  },
   podiumImage: { height: 680, position: "relative", top: 175 },
   userContainer: { position: "absolute", alignItems: "center" },
   avatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 3 },
-  badgeContainer: { position: "absolute", top: -8, right: -8, borderRadius: 10,width: 22,height: 22,justifyContent: "center",alignItems: "center", },
+  badgeContainer: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    borderRadius: 10,
+    width: 22,
+    height: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   badgeText: { fontSize: 11, color: "#000", fontWeight: "800" },
   name: { fontSize: 13, marginTop: 6 },
   points: { fontSize: 12 },
-  cardRow: {flexDirection: "row",alignItems: "center",justifyContent: "space-between",paddingVertical: 15,paddingHorizontal: 18,borderBottomWidth: 1, },
+  glassCard: {
+    width: "90%",
+    height: 270, 
+    borderRadius: 36,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  cardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
+  },
   rowLeft: { flexDirection: "row", alignItems: "center" },
-  rankNumber: { fontWeight: "700", fontSize: 15, width: 24, textAlign: "center", marginRight: 8 },
-  listAvatar: { width: 42, height: 42, borderRadius: 21, marginRight: 10 },
-  listName: { fontSize: 14 },
+  rankNumber: {
+    fontWeight: "700",
+    fontSize: 15,
+    width: 24,
+    textAlign: "center",
+    marginRight: 8,
+  },
+  listAvatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    marginRight: 10,
+  },
+  listName: { fontSize: 15 },
   pointsContainer: { flexDirection: "row", alignItems: "center" },
-  pointsIcon: { width: 16, height: 16, marginRight: 6 },
-  listPoints: { fontWeight: "600", fontSize: 14 },
-  glassCard: { width: "90%", height: 360, borderRadius: 36, paddingHorizontal: 10, marginBottom: 20 },
+  pointsIcon: { width: 17, height: 17, marginRight: 6 },
+  listPoints: { fontWeight: "600", fontSize: 15 },
 });

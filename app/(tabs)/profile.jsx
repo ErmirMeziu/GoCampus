@@ -134,7 +134,7 @@ export default function ProfileScreen() {
             {userData.emailPasswordEmail && (
               <View style={s.emailRow}>
                 <Ionicons name="lock-closed-outline" size={18} color={theme.textPrimary} />
-                <Text style={s.emailText}>{userData.emailPasswordEmail}</Text>
+                <Text style={[s.emailText,{color:theme.textPrimary}]}>{userData.emailPasswordEmail}</Text>
                 <View style={[s.badge, { backgroundColor: "#4CAF50" }]}>
                   <Text style={s.badgeText}>EMAIL</Text>
                 </View>
@@ -144,7 +144,7 @@ export default function ProfileScreen() {
             {userData.githubLinked && userData.githubEmail && (
               <View style={s.emailRow}>
                 <Ionicons name="logo-github" size={18} color={theme.textPrimary} />
-                <Text style={s.emailText}>{userData.githubEmail}</Text>
+                <Text style={[s.emailText,{color:theme.textPrimary}]}>{userData.githubEmail}</Text>
                 <View style={[s.badge, { backgroundColor: "#333" }]}>
                   <Text style={s.badgeText}>GITHUB</Text>
                 </View>
@@ -155,7 +155,7 @@ export default function ProfileScreen() {
           <View style={{ flexDirection: "row", gap: 12, marginTop: 20 }}>
         
             <TouchableOpacity
-              style={[s.methodBtn, { backgroundColor: userData.emailPasswordLinked ? "rgba(76,175,80,0.25)" : "rgba(255,255,255,0.08)" }]}
+              style={[s.methodBtn, { backgroundColor: userData.emailPasswordLinked ? "rgba(76,175,80,0.50)" : "rgba(255,255,255,0.08)" }]}
               onPress={() => !userData.emailPasswordLinked && setShowEmailLogin(true)}
             >
               <Ionicons name="mail-outline" size={18} color={userData.emailPasswordLinked ? "lime" : theme.textPrimary} />
@@ -169,7 +169,7 @@ export default function ProfileScreen() {
                 {
                   backgroundColor:
                     Platform.OS === "ios"
-                      ? "rgba(120,120,120,0.25)"
+                      ? "rgba(120,120,120,0.8)"
                       : userData.githubLinked
                         ? "rgba(51,51,51,0.5)"
                         : "rgba(255,255,255,0.08)",
