@@ -14,18 +14,17 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeProvider";
 import { GlassView } from "expo-glass-effect";
-import { auth, db } from "../../firebase/config";
+import { auth } from "../../firebase/config";
+import { router } from "expo-router";
+
+
 import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
-} from "firebase/firestore";
+  createEvent,
+  listenEvents,
+  likeEvent,
+  deleteEvent,
+} from "../../firebase/home";
+
 
 export default function HomeScreen() {
   const screenWidth = Dimensions.get("window").width;
@@ -40,74 +39,49 @@ export default function HomeScreen() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    setLoading(true);
-    setError("");
-    
-    const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setEvents(list);
-        setLoading(false);
-      },
-      (err) => {
-        setError(err.message || "Failed to load events");
-        setLoading(false);
-      }
-    );
+ useEffect(() => {
+  setLoading(true);
+  setError("");
 
-    return () => unsub();
-  }, []);
+  const unsubscribe = listenEvents((list) => {
+    setEvents(list);
+    setLoading(false);
+  });
 
-  const createEvent = async () => {
-    setError("");
-    setSuccess("");
-    try {
-      await addDoc(collection(db, "events"), {
-        title: "New Campus Event",
-        date: "TBD",
-        location: "Campus",
-        description: "Created from app (demo).",
-        image: "https://picsum.photos/800/600",
-        likes: 0,
-        comments: 0,
-        isHot: false,
-        createdBy: user?.uid || null,
-        createdAt: serverTimestamp(),
-      });
-      setSuccess("Event added");
-      setTimeout(() => setSuccess(""), 2500);
-    } catch (err) {
-      setError(err.message || "Failed to add event");
-    }
+  return () => unsubscribe();
+ }, []);
+
+
+  const handleCreateEvent = async () => {
+  setError("");
+  setSuccess("");
+
+  try {
+    await createEvent({ createdBy: user?.uid });
+    setSuccess("Event added");
+  } catch (err) {
+    setError(err.message);
+  }
+ };
+
+
+  const handleLikeEvent = async (id, likes) => {
+  try {
+    await likeEvent(id, likes);
+  } catch (err) {
+    setError(err.message);
+  }
+ };
+
+
+  const handleDeleteEvent = async (id) => {
+  try {
+    await deleteEvent(id);
+  } catch (err) {
+    setError(err.message);
+  }
   };
 
-  const likeEvent = async (id, currentLikes = 0) => {
-    setError("");
-    setSuccess("");
-    try {
-      const eventRef = doc(db, "events", id);
-      await updateDoc(eventRef, { likes: (currentLikes || 0) + 1 });
-      setSuccess("Liked!");
-      setTimeout(() => setSuccess(""), 1500);
-    } catch (err) {
-      setError(err.message || "Failed to like event");
-    }
-  };
-
-  const deleteEvent = async (id) => {
-    setError("");
-    setSuccess("");
-    try {
-      await deleteDoc(doc(db, "events", id));
-      setSuccess("Event deleted");
-      setTimeout(() => setSuccess(""), 1500);
-    } catch (err) {
-      setError(err.message || "Failed to delete event");
-    }
-  };
 
   const posts = [
     {
@@ -177,7 +151,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={createEvent} activeOpacity={0.8}>
+          <TouchableOpacity onPress={handleCreateEvent} activeOpacity={0.8}>
             <Ionicons
               name="add-circle-outline"
               size={24}
@@ -278,7 +252,7 @@ export default function HomeScreen() {
                         }}
                       >
                         <TouchableOpacity
-                          onPress={() => likeEvent(item.id, likes)}
+                          onPress={() => handleLikeEvent(item.id, likes)}
                           style={{ flexDirection: "row", alignItems: "center", marginRight: 12 }}
                         >
                           <Ionicons name="heart-outline" size={16} color="#fff" />
@@ -286,7 +260,7 @@ export default function HomeScreen() {
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                          onPress={() => deleteEvent(item.id)}
+                          onPress={() => handleDeleteEvent(item.id)}
                           style={{ flexDirection: "row", alignItems: "center" }}
                         >
                           <Ionicons name="trash" size={16} color="#fff" />
@@ -345,10 +319,14 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          <TouchableOpacity style={[styles.joinGroupButton, { backgroundColor: theme.primary }]}>
-            <Ionicons name="people" size={18} color="#fff" />
-            <Text style={styles.joinGroupText}>Explore Study Groups</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/groups")}
+            style={[styles.joinGroupButton, { backgroundColor: theme.primary }]}
+>
+          <Ionicons name="people" size={18} color="#fff" />
+          <Text style={styles.joinGroupText}>Explore Study Groups</Text>
           </TouchableOpacity>
+
         </GlassView>
 
         <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Recent Posts</Text>
