@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
+import { addPoints } from "../firebase/points";
+import { auth } from "../firebase/config";
 
 const TYPES = ["Notes", "Books", "Equipment"];
 
@@ -107,6 +109,7 @@ export default function CreateResourceModal({
             id: initialData?.id ?? null,
             ...resourceData,
         });
+        addPoints(auth.currentUser?.uid, "uploadResource");
 
         resetForm();
     };

@@ -1,128 +1,87 @@
-# 🎓 GoCampus
+# 🎓 GoCampus — Student Community App
 
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg?logo=react&logoColor=white)](https://react.dev/)
 [![React Native](https://img.shields.io/badge/React%20Native-0.76+-20232A.svg?logo=react&logoColor=61DAFB)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-51+-000020.svg?logo=expo&logoColor=white)](https://expo.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore-FFCA28.svg?logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E.svg?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-
-**GoCampus** is a mobile application built with **Expo / React Native**, designed to help students discover and join campus **groups**, keep track of **upcoming events**, view **leaderboards**, access **resources**, and manage their **profile** — all in one place.  
-The goal of this project is to make it easy for students to quickly find communities, stay informed, and participate in campus life.
+**GoCampus** is a full-featured mobile platform built with **Expo / React Native**, enabling university students to connect through **groups**, participate in campus events, earn **points**, compete on the **leaderboard**, access learning **resources**, and manage personal **profiles** with advanced account linking.
 
 ---
 
-## 🧭 Project Overview
+## 🚀 Latest Features (2025 Update)
 
-GoCampus provides a simple and efficient way for students to:
-- 🔍 **Browse student groups** with search and filters (category, joined-only, minimum members, activity).
-- ➕ **Create a new group** (name, category, description, tags, members, activity).
-- 📅 **See upcoming events** in a horizontal carousel (standalone events).
-- 📝 **Create an event** (title, date, time, location, optional image).
-- 👥 **Join/Leave groups** and view them in **My Groups**.
-- 📊 **Check the leaderboard** for rankings/challenges.
-- 📚 **Open campus resources** from a centralized list.
-- 👤 **View profile** (placeholder for account info and settings).
+### 🔐 Authentication
+- Login with **Email + Password**
+- **GitHub auth** (web + Android, disabled on iOS)
+- Link/unlink email login
+- Protected routes using Firebase Auth
 
----
+### 🖼️ Profile
+- Editable settings (name, phone, DOB, language, notifications)
+- **Advanced profile picture cropper** (zoom + drag)
+- Connected emails & GitHub account section
+- Logout button integrated in UI
 
-## ✨ Key Features
+### 🏆 Points & Leaderboard
+- Firestore-powered real-time leaderboard  
+- Users automatically earn points for actions:
+  - Joining a group  
+  - Creating a group  
+  - Creating an event  
+  - Uploading a resource  
+  - Commenting  
+- Shows:
+  - Your **rank**
+  - Your **points**
+  - Top 3 with podium layout
+  - Scrollable list of others
 
-- 🧑‍🤝‍🧑 **Groups Screen** – search & chips, filters (joined-only, min members/activity), join/leave, **My Groups** carousel, **Create Group** & **Create Event** modals.  
-- 📅 **Upcoming Events** – global horizontal events rail (soonest first).  
-- 🏆 **Leaderboard Screen** – rankings placeholder (for house points/challenges).  
-- 📚 **Resources Screen** – quick links and materials placeholder.  
-- 👤 **Profile Screen** – profile/settings placeholder.  
-- 🌓 **Theme** – light/dark mode via ThemeProvider.
+### 👥 Groups
+- View all groups
+- Join / Leave groups
+- My Groups carousel
+- Create group modal
+- Edit group details
+- Group membership saved in Firestore (`joinedBy` array)
+
+### 📅 Events
+- Create events with title, date/time, location, optional image
+- Global upcoming events feed sorted by date
+
+### 📚 Resources
+- Centralized notes/books/resources added by students
+- Upload from device
+- Awards points on upload
+
+### 🤖 Notes AI
+- Smart note-making and explanations
+- Uses LLM integration
+
+### 🧭 Custom Glass Tab Bar
+- Fully custom bottom tab bar
+- Glass blur effect
+- Double-tap to reload data
+- Animated active icon
+- Works on iOS, Android, Web
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component            | Technology                          |
-|---------------------|--------------------------------------|
-| Frontend            | **React Native**                     |
-| Framework/Tooling   | **Expo**                             |
-| Programming Language| **JavaScript (ES6)**                 |
-| UI Icons            | **@expo/vector-icons (Ionicons)**    |
-| Safe Areas          | **react-native-safe-area-context**   |
-| Visual Effects      | **expo-glass-effect**                |
-| State/Theme         | **Context (ThemeProvider)**          |
-| IDE                 | **Visual Studio Code**               |
-| Version Control     | **Git & GitHub**                     |
+| Feature | Technology |
+|--------|------------|
+| Frontend | React Native (Expo) |
+| Routing | Expo Router |
+| Auth | Firebase Auth |
+| Database | Firestore |
+| Storage | Firebase Storage |
+| UI Effects | expo-glass-effect |
+| Icons | Ionicons |
+| Theme | Context API (light/dark) |
 
----
-
-## 📲 UI Preview
-
-### 🔹 Home
-<img src="./assets/home.jpg" width="350"/>
-
-### 🔹 Groups Screen
-<img src="./assets/groups.jpg" width="350"/>
-
-### 🔹 Leaderboard
-<img src="./assets/leaderboard.jpg" width="350"/>
-
-### 🔹 Resources
-<img src="./assets/resources.jpg" width="350"/>
-
-### 🔹 Profile
-<img src="./assets/profile.jpg" width="350"/>
-
----
-
-## 📁 Minimal Structure
-
-```
-gocampus/
-│
-├── app/                         # All screens (Expo Router)
-│   ├── _layout.jsx              # Tabs / navigation shell
-│   ├── index.jsx                # Home (Landing / Dashboard)
-│   ├── groups.jsx               # Groups screen (create/join/edit)
-│   ├── resources.jsx            # Resource sharing (notes/books/equipment)
-│   ├── leaderboard.jsx          # Leaderboard screen
-│   └── profile.jsx              # Profile screen
-│
-├── assets/                      # Images and backgrounds
-│   ├── backgrounds/
-│   │   ├── light.png
-│   │   └── dark.png
-│   └── img/
-│       ├── groups.jpg
-│       ├── home.jpg
-│       ├── leaderboard.jpg
-│       ├── profile.jpg
-│       ├── resources.jpg
-│       └── splash-icon.png
-│
-├── components/                  # Reusable UI blocks + modals
-│   ├── CreateEventModal.js
-│   ├── CreateGroupModal.js
-│   ├── CreateResourceModal.js
-│   ├── EditGroupModal.js
-│   ├── EditSettingModal.js
-│   ├── EventCard.js
-│   ├── GroupDetail.js
-│   ├── ProfileActions.js
-│   ├── SettingsList.js
-│   └── index.js                 # (optional: export all components here)
-│
-├── constants/
-│   └── colors.js                # Centralized theme colors (light/dark)
-│
-├── context/
-│   └── ThemeProvider.js         # Theme context + custom hook
-│
-├── app.json
-├── package.json
-├── package-lock.json
-└── README.md
-
-```
-
----
 
 ## 🚀 Getting Started
 
@@ -139,10 +98,11 @@ npx expo start
 ## 👥 Project Team
 
 **Developed by:**  
+- [Eron Berisha](https://github.com/eronberishaa)
 - [Enkel Berisha](https://github.com/enkelberisha)
 - [Ermir Meziu](https://github.com/ErmirMeziu)
 - [Vlera Galica](https://github.com/vleragalica)
-- [Eron Berisha](https://github.com/eronberishaa)
+
 
 FIEK - Universiteti i Prishtines
 

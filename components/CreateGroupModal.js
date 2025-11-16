@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { GlassView } from "expo-glass-effect";
 import { pickImages } from "../utils/imageUtils";
+import { addPoints } from "../firebase/points";
+import { auth } from "../firebase/config";
 
 const CATEGORIES = ["Tech", "Arts", "Study", "Sports", "Social"];
 
@@ -51,6 +53,7 @@ export default function CreateGroupModal({ visible, onClose, onSave }) {
         setDescription("");
         setTags("");
         setImage(null);
+        addPoints(auth.currentUser?.uid, "createGroup");
     };
 
     return (

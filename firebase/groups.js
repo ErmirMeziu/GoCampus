@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 
 import { db, auth } from "./config";
+import { addPoints } from "../firebase/points";
 
 const groupsCol = collection(db, "groups");
 const eventsCol = collection(db, "events");
@@ -67,6 +68,9 @@ export async function toggleJoinDB(group) {
     joinedBy: updated,
     members: updated.length,
   });
+  if (!isJoined) {
+    addPoints(uid, "joinGroup");
+  }
 }
 
 export async function createEventDB(event) {
