@@ -13,9 +13,9 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
-
 import { useTheme } from "../../context/ThemeProvider";
 
 import { pickImages, restoreImages, cleanData } from "../../utils/imageUtils";
@@ -70,7 +70,6 @@ export default function ResourceSharingScreen() {
     setActiveCat(cat);
     const data =
       cat === "All" ? await getAllResources() : await getResourcesByType(cat);
-
     setResources(data.map((r) => ({ ...r, images: restoreImages(r.images) })));
   };
 
@@ -83,7 +82,6 @@ export default function ResourceSharingScreen() {
     }
 
     const results = await searchResources(text);
-
     setResources(results.map((r) => ({ ...r, images: restoreImages(r.images) })));
   };
 
@@ -179,10 +177,7 @@ export default function ResourceSharingScreen() {
           </Text>
         </View>
 
-        <Text
-          style={[styles.cardDesc, { color: theme.textMuted }]}
-          numberOfLines={2}
-        >
+        <Text style={[styles.cardDesc, { color: theme.textMuted }]} numberOfLines={2}>
           {item.description}
         </Text>
 
@@ -192,7 +187,6 @@ export default function ResourceSharingScreen() {
           </Text>
         )}
 
-        {/* Image previews */}
         {item.images?.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {item.images.map((img, idx) => (

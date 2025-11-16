@@ -1,26 +1,15 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeProvider";
 import { auth } from "../../firebase/config";
-
 import SettingsList from "../../components/SettingsList";
 import EditSettingModal from "../../components/EditSettingModal";
 import EmailLogin from "../../components/EmailLogin";
 import ChangePasswordModal from "../../components/ChangePasswordModal";
 import { router } from "expo-router";
-
-
 import { listenUserProfile, updateUserProfile } from "../../firebase/profile";
-
 import {
   GithubAuthProvider,
   linkWithPopup,
@@ -29,97 +18,82 @@ import {
   updatePassword,
   signOut,
 } from "firebase/auth";
+import * as ImagePicker from "expo-image-picker";
+import { handleLogout } from "../../components/ProfileActions";
 
 export default function ProfileScreen() {
   const { theme } = useTheme();
-
   const [modalVisible, setModalVisible] = useState(false);
   const [currentSetting, setCurrentSetting] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [userData, setUserData] = useState(null);
-
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const user = auth.currentUser;
 
+  const pickImg = async () => {
+    try {
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+        base64: true,
+      });
+      if (res.canceled) return;
+
+      await updateUserProfile(user.uid, {
+        photoURL: `data:image/jpeg;base64,${res.assets[0].base64}`,
+      });
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
     return listenUserProfile(user.uid, (profile) => {
-      const providers = auth.currentUser.providerData;
+      const providers = user.providerData;
 
       const emailProvider = providers.find((p) => p.providerId === "password");
       const githubProvider = providers.find((p) => p.providerId === "github.com");
 
-      const merged = {
-        name: "",
-        phone: "",
-        dob: "",
-        language: "English",
-        notifications: true,
+      setUserData({
+        ...profile, 
 
         emailPasswordLinked: !!emailProvider,
         githubLinked: !!githubProvider,
-
         emailPasswordEmail: emailProvider?.email || null,
         githubEmail: githubProvider?.email || null,
 
         mainEmail: user.email,
-        photoURL: null,
-
-        ...profile,
-      };
-
-      setUserData(merged);
-
-      if (profile.githubLinked !== merged.githubLinked)
-        updateUserProfile(user.uid, { githubLinked: merged.githubLinked });
-
-      if (profile.emailPasswordLinked !== merged.emailPasswordLinked)
-        updateUserProfile(user.uid, { emailPasswordLinked: merged.emailPasswordLinked });
+      });
     });
   }, []);
 
   if (!userData)
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={s.center}>
         <Text style={{ color: theme.textPrimary }}>Loading...</Text>
       </View>
     );
 
-  const handlePasswordChange = async (currentPass, newPass, setError) => {
+  const changePass = async (oldP, newP, setError) => {
     try {
-      const currentUser = auth.currentUser;
-
-      const credential = EmailAuthProvider.credential(
-        currentUser.email,
-        currentPass
-      );
-
-      await reauthenticateWithCredential(currentUser, credential);
-
-      await updatePassword(currentUser, newPass);
-
+      const cred = EmailAuthProvider.credential(auth.currentUser.email, oldP);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+      await updatePassword(auth.currentUser, newP);
       await signOut(auth);
-
       setShowPasswordModal(false);
-
-      alert("Password updated! Please log in again.");
-
       router.replace("/login");
-
     } catch (err) {
-      if (err.message.includes("auth/wrong-password")) {
-        setError("Current password is incorrect.");
-      } else if (err.message.includes("auth/weak-password")) {
-        setError("New password is too weak.");
-      } else {
-        setError(err.message);
-      }
+      if (err.message.includes("wrong-password")) setError("Incorrect current password.");
+      else if (err.message.includes("weak-password")) setError("Weak password.");
+      else setError(err.message);
     }
   };
-
 
   const settings = [
     { icon: "person-outline", title: "Name", subtitle: userData.name, type: "text", key: "name" },
@@ -132,100 +106,91 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-      <ScrollView>
-        {/* HEADER */}
+      <View style={s.logoutWrap}>
+        <TouchableOpacity onPress={() => handleLogout(router)} style={s.logoutBtn}>
+          <Ionicons name="log-out-outline" size={24} color="red" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={s.scroll}>
         <View style={{ alignItems: "center", paddingVertical: 35 }}>
-          <Image
-            source={{ uri: userData.photoURL || "https://i.pravatar.cc/300" }}
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: 70,
-              borderWidth: 2,
-              borderColor: theme.primary,
-            }}
-          />
+          <TouchableOpacity onPress={pickImg}>
+            <Image
+              source={{ uri: userData.photoURL || "https://i.pravatar.cc/300" }}
+              style={{ width: 120, height: 120, borderRadius: 70, borderWidth: 2, borderColor: theme.primary }}
+            />
+            <View style={[s.cameraBadge,{backgroundColor:theme.primary}]}>
+              <Ionicons name="camera" size={18} color="#fff" />
+            </View>
+          </TouchableOpacity>
 
           <Text style={{ color: theme.textPrimary, fontSize: 24, fontWeight: "700", marginTop: 12 }}>
             {userData.name}
           </Text>
 
-          <View
-            style={{
-              backgroundColor: "rgba(255,255,255,0.08)",
-              marginTop: 16,
-              padding: 15,
-              borderRadius: 15,
-              width: "90%",
-              gap: 8,
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.12)",
-            }}
-          >
-            <Text style={{ color: theme.textMuted, fontSize: 12, marginBottom: 4 }}>
-              Connected Emails
-            </Text>
+          <View style={s.card}>
+            <Text style={{ color: theme.textMuted, fontSize: 12, marginBottom: 4 }}>Connected Emails</Text>
 
             {userData.emailPasswordEmail && (
-              <View style={styles.emailRow}>
+              <View style={s.emailRow}>
                 <Ionicons name="lock-closed-outline" size={18} color={theme.textPrimary} />
-                <Text style={styles.emailText}>{userData.emailPasswordEmail}</Text>
-                <View style={[styles.badge, { backgroundColor: "#4CAF50" }]}>
-                  <Text style={styles.badgeText}>EMAIL</Text>
+                <Text style={[s.emailText,{color:theme.textPrimary}]}>{userData.emailPasswordEmail}</Text>
+                <View style={[s.badge, { backgroundColor: "#4CAF50" }]}>
+                  <Text style={s.badgeText}>EMAIL</Text>
                 </View>
               </View>
             )}
 
-            {userData.githubEmail && (
-              <View style={styles.emailRow}>
+            {userData.githubLinked && userData.githubEmail && (
+              <View style={s.emailRow}>
                 <Ionicons name="logo-github" size={18} color={theme.textPrimary} />
-                <Text style={styles.emailText}>{userData.githubEmail}</Text>
-                <View style={[styles.badge, { backgroundColor: "#333" }]}>
-                  <Text style={styles.badgeText}>GITHUB</Text>
+                <Text style={[s.emailText,{color:theme.textPrimary}]}>{userData.githubEmail}</Text>
+                <View style={[s.badge, { backgroundColor: "#333" }]}>
+                  <Text style={s.badgeText}>GITHUB</Text>
                 </View>
               </View>
             )}
           </View>
 
-          <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
-
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 20 }}>
+        
             <TouchableOpacity
-              style={[
-                styles.methodBtn,
-                {
-                  backgroundColor: userData.emailPasswordLinked
-                    ? "rgba(76,175,80,0.25)"
-                    : "rgba(255,255,255,0.08)",
-                },
-              ]}
-              onPress={() => {
-                if (!userData.emailPasswordLinked) setShowEmailLogin(true);
-              }}
+              style={[s.methodBtn, { backgroundColor: userData.emailPasswordLinked ? "rgba(76,175,80,0.50)" : "rgba(255,255,255,0.08)" }]}
+              onPress={() => !userData.emailPasswordLinked && setShowEmailLogin(true)}
             >
-              <Ionicons
-                name="mail-outline"
-                size={18}
-                color={userData.emailPasswordLinked ? "lime" : theme.textPrimary}
-              />
-              <Text style={styles.methodText}>
-                {userData.emailPasswordLinked ? "Email Connected" : "Add Email"}
-              </Text>
+              <Ionicons name="mail-outline" size={18} color={userData.emailPasswordLinked ? "lime" : theme.textPrimary} />
+              <Text style={s.methodText}>{userData.emailPasswordLinked ? "Email Connected" : "Add Email"}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
+              disabled={Platform.OS === "ios"}
               style={[
-                styles.methodBtn,
+                s.methodBtn,
                 {
-                  backgroundColor: userData.githubLinked
-                    ? "rgba(51,51,51,0.5)"
-                    : "rgba(255,255,255,0.08)",
+                  backgroundColor:
+                    Platform.OS === "ios"
+                      ? "rgba(120,120,120,0.8)"
+                      : userData.githubLinked
+                        ? "rgba(51,51,51,0.5)"
+                        : "rgba(255,255,255,0.08)",
+                  opacity: Platform.OS === "ios" ? 0.4 : 1,
                 },
               ]}
               onPress={async () => {
-                if (userData.githubLinked) return;
+                if (Platform.OS === "ios" || userData.githubLinked) return;
+
                 try {
                   const provider = new GithubAuthProvider();
                   await linkWithPopup(auth.currentUser, provider);
+
+                  const providers = auth.currentUser.providerData;
+                  const githubProvider = providers.find((p) => p.providerId === "github.com");
+
+                  setUserData((prev) => ({
+                    ...prev,
+                    githubLinked: true,
+                    githubEmail: githubProvider?.email,
+                  }));
                 } catch (e) {
                   alert(e.message);
                 }
@@ -234,10 +199,15 @@ export default function ProfileScreen() {
               <Ionicons
                 name="logo-github"
                 size={18}
-                color={userData.githubLinked ? "#fff" : theme.textPrimary}
+                color={Platform.OS === "ios" ? "#888" : userData.githubLinked ? "#fff" : theme.textPrimary}
               />
-              <Text style={styles.methodText}>
-                {userData.githubLinked ? "GitHub Connected" : "Add GitHub"}
+
+              <Text style={s.methodText}>
+                {Platform.OS === "ios"
+                  ? "Unavailable on iOS"
+                  : userData.githubLinked
+                    ? "GitHub Connected"
+                    : "Add GitHub"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -247,15 +217,8 @@ export default function ProfileScreen() {
           settings={settings}
           theme={theme}
           onPress={(setting) => {
-            if (setting.type === "passwordModal") {
-              setShowPasswordModal(true);
-              return;
-            }
-
-            if (setting.type === "toggle") {
-              updateUserProfile(user.uid, { [setting.key]: !userData[setting.key] });
-              return;
-            }
+            if (setting.type === "passwordModal") return setShowPasswordModal(true);
+            if (setting.type === "toggle") return updateUserProfile(user.uid, { [setting.key]: !userData[setting.key] });
 
             setCurrentSetting(setting);
             setEditValue(userData[setting.key] || "");
@@ -278,65 +241,28 @@ export default function ProfileScreen() {
       </ScrollView>
 
       {showEmailLogin && (
-        <View style={styles.overlay}>
+        <View style={s.overlay}>
           <EmailLogin uid={user.uid} onClose={() => setShowEmailLogin(false)} />
         </View>
       )}
 
-      <ChangePasswordModal
-        visible={showPasswordModal}
-        theme={theme}
-        onClose={() => setShowPasswordModal(false)}
-        onChangePassword={handlePasswordChange}
-      />
+      <ChangePasswordModal visible={showPasswordModal} theme={theme} onClose={() => setShowPasswordModal(false)} onChangePassword={changePass} />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  methodBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  methodText: {
-    marginLeft: 8,
-    color: "white",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  emailRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 4,
-  },
-  emailText: {
-    color: "white",
-    fontSize: 14,
-    flex: 1,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  badgeText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
+const s = StyleSheet.create({
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  logoutWrap: { position: "absolute", top: 0, right: 0, paddingTop: 45, paddingRight: 18, zIndex: 999 },
+  logoutBtn: { padding: 8, borderRadius: 20 },
+  scroll: { paddingTop: 100, marginTop: -40, paddingBottom: 40 },
+  cameraBadge: { position: "absolute", bottom: 0, right: 0, padding: 6, borderRadius: 30, },
+  card: { backgroundColor: "rgba(255,255,255,0.08)", marginTop: 16, padding: 15, borderRadius: 15, width: "90%", gap: 8, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" },
+  methodBtn: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10 },
+  methodText: { marginLeft: 8, color: "white", fontSize: 14, fontWeight: "500" },
+  emailRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4 },
+  emailText: { color: "white", fontSize: 14, flex: 1 },
+  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  badgeText: { color: "white", fontSize: 10, fontWeight: "700" },
+  overlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", paddingHorizontal: 20 },
 });
