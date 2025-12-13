@@ -9,6 +9,7 @@ import EditSettingModal from "../../components/EditSettingModal";
 import EmailLogin from "../../components/EmailLogin";
 import ChangePasswordModal from "../../components/ChangePasswordModal";
 import { router } from "expo-router";
+import { Alert } from 'react-native';
 import { listenUserProfile, updateUserProfile } from "../../firebase/profile";
 import {
   GithubAuthProvider,
@@ -32,24 +33,68 @@ export default function ProfileScreen() {
 
   const user = auth.currentUser;
 
-  const pickImg = async () => {
-    try {
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-        base64: true,
-      });
-      if (res.canceled) return;
+ const pickImg = async () => {
+  try {
+    // Request permission to access the camera and media library
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+    const galleryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      await updateUserProfile(user.uid, {
-        photoURL: `data:image/jpeg;base64,${res.assets[0].base64}`,
-      });
-    } catch (e) {
-      alert(e.message);
+    if (cameraPermission.status !== "granted" || galleryPermission.status !== "granted") {
+      alert("Sorry, we need camera and gallery permissions to make this work!");
+      return;
     }
-  };
+
+    // Ask the user if they want to take a photo or pick from the gallery
+    const result = await new Promise((resolve) =>
+      Alert.alert(
+        "Select Image",
+        "Choose an option",
+        [
+          {
+            text: "Take a Photo",
+            onPress: async () => {
+              const picked = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                aspect: [1, 1], // Optional, set the aspect ratio of the image
+                quality: 1, // Quality of the image
+                base64: true, // Return the image in base64
+              });
+              resolve(picked);
+            },
+          },
+          {
+            text: "Pick from Gallery",
+            onPress: async () => {
+              const picked = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                aspect: [1, 1], // Optional, set the aspect ratio of the image
+                quality: 1, // Quality of the image
+                base64: true, // Return the image in base64
+              });
+              resolve(picked);
+            },
+          },
+          { text: "Cancel", onPress: () => resolve(null), style: "cancel" },
+        ],
+        { cancelable: true }
+      )
+    );
+
+    if (!result || result.cancelled) return;
+
+    // If a photo is taken or picked from the gallery, upload it
+    const photoBase64 = result.assets[0].base64;
+
+    // Upload the photo to Firebase
+    await updateUserProfile(user.uid, {
+      photoURL: `data:image/jpeg;base64,${photoBase64}`, // Save the base64 string
+    });
+
+  } catch (e) {
+    alert(e.message); // Handle any errors that occur
+  }
+};
+
 
   useEffect(() => {
     if (!user) return;
