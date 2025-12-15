@@ -1,4 +1,6 @@
 import { Alert } from "react-native";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase/config";
 
 export const handleSaveProfile = ({ editValue, currentSetting, setUserData, setModalVisible }) => {
     if (editValue.trim()) {
@@ -14,6 +16,18 @@ export const handleSaveProfile = ({ editValue, currentSetting, setUserData, setM
 export const handleLogout = (router) => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
         { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: () => router.replace("/login") },
+
+        {
+            text: "Logout",
+            style: "destructive",
+            onPress: async () => {
+                try {
+                    await signOut(auth);
+                    router.replace("/login");
+                } catch (error) {
+                    console.log("Logout error:", error);
+                }
+            }
+        }
     ]);
 };

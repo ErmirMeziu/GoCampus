@@ -108,7 +108,10 @@ export default function CreateResourceModal({
         onSave?.({
             id: initialData?.id ?? null,
             ...resourceData,
+            createdBy: auth.currentUser?.uid ?? null,
+            createdAt: Date.now(),
         });
+
         addPoints(auth.currentUser?.uid, "uploadResource");
 
         resetForm();

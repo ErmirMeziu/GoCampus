@@ -1,18 +1,9 @@
 import React, { useState } from "react";
 import {
-    Modal,
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    ScrollView,
-    Image,
-    KeyboardAvoidingView,
-    TouchableWithoutFeedback,
-    TouchableOpacity as TouchOutside,
-    Keyboard,
-    Platform
+    Modal, View, Text, TextInput, TouchableOpacity,
+    StyleSheet, ScrollView, Image, KeyboardAvoidingView,
+    TouchableWithoutFeedback, TouchableOpacity as TouchOutside,
+    Keyboard, Platform
 } from "react-native";
 import { GlassView } from "expo-glass-effect";
 import { pickImages } from "../utils/imageUtils";
@@ -36,6 +27,8 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
     const handleCreate = () => {
         if (!title.trim() || !date.trim()) return;
 
+        const now = new Date();
+
         onSave({
             title: title.trim(),
             date: date.trim(),
@@ -43,6 +36,12 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
             location: location.trim(),
             groupId: groupId ?? null,
             imageBase64: image?.base64 || null,
+
+            createdBy: auth.currentUser?.uid ?? null,
+
+            createdAt: now.getTime(),
+
+            dateCreated: now.toISOString()
         });
 
         setTitle("");
@@ -51,61 +50,27 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
         setLocation("");
         setGroupId(groups?.[0]?.id ?? null);
         setImage(null);
-        addPoints(auth.currentUser?.uid, "createEvent");
 
+        addPoints(auth.currentUser?.uid, "createEvent");
     };
 
     return (
         <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-
-            <TouchOutside
-                activeOpacity={1}
-                style={styles.overlay}
-                onPress={onClose}
-            >
-
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={{ width: "100%" }}
-                >
-
+            <TouchOutside activeOpacity={1} style={styles.overlay} onPress={onClose}>
+                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ width: "100%" }}>
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                         <GlassView style={styles.card} intensity={90}>
                             <Text style={styles.title}>Create Event</Text>
 
                             <ScrollView showsVerticalScrollIndicator={false}>
-                                <TextInput
-                                    placeholder="Event Title"
-                                    placeholderTextColor="#aaa"
-                                    style={styles.input}
-                                    value={title}
-                                    onChangeText={setTitle}
-                                />
+                                <TextInput placeholder="Event Title" placeholderTextColor="#aaa" style={styles.input} value={title} onChangeText={setTitle} />
 
                                 <View style={styles.row}>
-                                    <TextInput
-                                        placeholder="YYYY-MM-DD"
-                                        placeholderTextColor="#aaa"
-                                        style={[styles.input, { flex: 1 }]}
-                                        value={date}
-                                        onChangeText={setDate}
-                                    />
-                                    <TextInput
-                                        placeholder="HH:MM"
-                                        placeholderTextColor="#aaa"
-                                        style={[styles.input, { flex: 1 }]}
-                                        value={time}
-                                        onChangeText={setTime}
-                                    />
+                                    <TextInput placeholder="YYYY-MM-DD" placeholderTextColor="#aaa" style={[styles.input, { flex: 1 }]} value={date} onChangeText={setDate} />
+                                    <TextInput placeholder="HH:MM" placeholderTextColor="#aaa" style={[styles.input, { flex: 1 }]} value={time} onChangeText={setTime} />
                                 </View>
 
-                                <TextInput
-                                    placeholder="Location"
-                                    placeholderTextColor="#aaa"
-                                    style={styles.input}
-                                    value={location}
-                                    onChangeText={setLocation}
-                                />
+                                <TextInput placeholder="Location" placeholderTextColor="#aaa" style={styles.input} value={location} onChangeText={setLocation} />
 
                                 <Text style={styles.label}>Assign to Group</Text>
 
@@ -133,10 +98,7 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
                                 {image && <Image source={{ uri: image.uri }} style={styles.preview} />}
 
                                 <View style={styles.row}>
-                                    <TouchableOpacity
-                                        style={[styles.btn, { backgroundColor: "rgba(255,255,255,0.25)" }]}
-                                        onPress={onClose}
-                                    >
+                                    <TouchableOpacity style={[styles.btn, { backgroundColor: "rgba(255,255,255,0.25)" }]} onPress={onClose}>
                                         <Text style={styles.btnText}>Cancel</Text>
                                     </TouchableOpacity>
 
@@ -152,7 +114,6 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
                         </GlassView>
                     </TouchableWithoutFeedback>
                 </KeyboardAvoidingView>
-
             </TouchOutside>
         </Modal>
     );
@@ -170,5 +131,5 @@ const styles = StyleSheet.create({
     preview: { width: "100%", height: 160, borderRadius: 12, marginBottom: 10 },
     row: { flexDirection: "row", gap: 10 },
     btn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
-    btnText: { color: "#fff", fontWeight: "700" }
+    btnText: { color: "#fff", fontWeight: "700" },
 });

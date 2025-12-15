@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -15,11 +15,13 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+
 import { GlassView } from "expo-glass-effect";
 import { useTheme } from "../../context/ThemeProvider";
+import { useLocalSearchParams } from "expo-router";
 
 import { pickImages, restoreImages, cleanData } from "../../utils/imageUtils";
-
 import CreateResourceModal from "../../components/CreateResourceModal";
 
 import {
@@ -38,6 +40,9 @@ const CATEGORY_CHIPS = ["All", "Notes", "Books", "Equipment"];
 
 export default function ResourceSharingScreen() {
   const { theme, isDarkMode } = useTheme();
+  const { scrollTo } = useLocalSearchParams();
+
+  const listRef = useRef(null);
 
   const [resources, setResources] = useState([]);
   const [query, setQuery] = useState("");
@@ -51,6 +56,8 @@ export default function ResourceSharingScreen() {
   const [selectedImage, setSelectedImage] = useState(null);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [highlightId, setHighlightId] = useState(null);
+
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -65,6 +72,51 @@ export default function ResourceSharingScreen() {
     );
     return () => unsub();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setQuery("");
+        setActiveCat("All");
+        setHighlightId(null);
+        setResources(prev => prev); 
+        requestAnimationFrame(() => {
+          listRef.current?.scrollToOffset({ offset: 0, animated: false });
+        });
+      };
+    }, [])
+  );
+
+  useEffect(() => {
+    if (!scrollTo || !listRef.current || resources.length === 0) return;
+
+    const index = resources.findIndex((r) => r.id === scrollTo);
+    if (index >= 0) {
+      setTimeout(() => {
+        listRef.current.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.45,
+        });
+        setHighlightId(scrollTo);
+        setTimeout(() => setHighlightId(null), 2000);
+      }, 350);
+    }
+  }, [scrollTo, resources]);
+
+  const clearSearchAndFocusAll = () => {
+    setQuery("");
+    setActiveCat("All");
+
+    setHighlightId(null);
+
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+
+    setTimeout(() => {
+      setHighlightId(null);
+    }, 0);
+  };
+
 
   const handleCategoryChange = async (cat) => {
     setActiveCat(cat);
@@ -114,97 +166,113 @@ export default function ResourceSharingScreen() {
     setEditVisible(false);
   };
 
-  const renderCard = ({ item }) => (
-    <GlassView
-      glassEffectStyle="clear"
-      intensity={60}
-      style={[styles.card, { backgroundColor: theme.card }]}
-    >
-      <Image
-        source={
-          item.images?.length
-            ? { uri: item.images[0].uri }
-            : {
+  const renderCard = ({ item }) => {
+    const isHighlighted = item.id === highlightId;
+
+    return (
+      <GlassView
+        glassEffectStyle="clear"
+        intensity={isHighlighted ? 95 : 60}
+        style={[
+          styles.card,
+          {
+            backgroundColor: isHighlighted ? theme.primary + "22" : theme.card,
+            shadowColor: isHighlighted ? theme.primary : "#000",
+            shadowOpacity: isHighlighted ? 0.35 : 0.08,
+            shadowRadius: isHighlighted ? 18 : 8,
+          },
+        ]}
+      >
+
+        <Image
+          source={
+            item.images?.length
+              ? { uri: item.images[0].uri }
+              : {
                 uri: "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?w=800&q=80",
               }
-        }
-        style={styles.cardImage}
-      />
+          }
+          style={styles.cardImage}
+        />
 
-      <View style={styles.cardBody}>
-        <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
-            {item.title}
+        <View style={styles.cardBody}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
+              {item.title}
+            </Text>
+
+            {item.ownerId === auth.currentUser.uid && (
+              <View style={{ flexDirection: "row" }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEditTarget(item);
+                    setEditVisible(true);
+                  }}
+                >
+                  <Ionicons name="create-outline" size={18} color={theme.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{ marginLeft: 8 }}
+                  onPress={() => handleDeleteResource(item.id)}
+                >
+                  <Ionicons name="trash-outline" size={18} color="red" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+            {item.ownerPhoto && (
+              <Image
+                source={{ uri: item.ownerPhoto }}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 11,
+                  marginRight: 6,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                }}
+              />
+            )}
+            <Text style={{ color: theme.textMuted, fontSize: 12 }}>
+              {item.ownerName}
+            </Text>
+          </View>
+
+          <Text
+            style={[styles.cardDesc, { color: theme.textMuted }]}
+            numberOfLines={2}
+          >
+            {item.description}
           </Text>
 
-          {item.ownerId === auth.currentUser.uid && (
-            <View style={{ flexDirection: "row" }}>
-              <TouchableOpacity
-                onPress={() => {
-                  setEditTarget(item);
-                  setEditVisible(true);
-                }}
-              >
-                <Ionicons name="create-outline" size={18} color={theme.primary} />
-              </TouchableOpacity>
+          {item.resourceType === "Equipment" && (
+            <Text style={[styles.cardInfo, { color: theme.textPrimary }]}>
+              {item.condition} • {item.borrowDuration} days
+            </Text>
+          )}
 
-              <TouchableOpacity
-                style={{ marginLeft: 8 }}
-                onPress={() => handleDeleteResource(item.id)}
-              >
-                <Ionicons name="trash-outline" size={18} color="red" />
-              </TouchableOpacity>
-            </View>
+          {item.images?.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {item.images.map((img, idx) => (
+                <Pressable
+                  key={idx}
+                  onPress={() => {
+                    setSelectedImage(img.uri);
+                    setImageModalVisible(true);
+                  }}
+                >
+                  <Image source={{ uri: img.uri }} style={styles.preview} />
+                </Pressable>
+              ))}
+            </ScrollView>
           )}
         </View>
-
-        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-          {item.ownerPhoto && (
-            <Image
-              source={{ uri: item.ownerPhoto }}
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                marginRight: 6,
-                borderWidth: 1,
-                borderColor: theme.border,
-              }}
-            />
-          )}
-          <Text style={{ color: theme.textMuted, fontSize: 12 }}>
-            {item.ownerName}
-          </Text>
-        </View>
-
-        <Text style={[styles.cardDesc, { color: theme.textMuted }]} numberOfLines={2}>
-          {item.description}
-        </Text>
-
-        {item.resourceType === "Equipment" && (
-          <Text style={[styles.cardInfo, { color: theme.textPrimary }]}>
-            {item.condition} • {item.borrowDuration} days
-          </Text>
-        )}
-
-        {item.images?.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {item.images.map((img, idx) => (
-              <Pressable
-                key={idx}
-                onPress={() => {
-                  setSelectedImage(img.uri);
-                  setImageModalVisible(true);
-                }}
-              >
-                <Image source={{ uri: img.uri }} style={styles.preview} />
-              </Pressable>
-            ))}
-          </ScrollView>
-        )}
-      </View>
-    </GlassView>
-  );
+      </GlassView>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -235,10 +303,11 @@ export default function ResourceSharingScreen() {
           style={[styles.searchInput, { color: theme.textPrimary }]}
         />
         {query.length > 0 && (
-          <TouchableOpacity onPress={() => handleSearch("")}>
+          <TouchableOpacity onPress={clearSearchAndFocusAll}>
             <Ionicons name="close-circle" size={18} color={theme.textMuted} />
           </TouchableOpacity>
         )}
+
       </GlassView>
 
       <View style={styles.categories}>
@@ -267,16 +336,23 @@ export default function ResourceSharingScreen() {
       </View>
 
       <FlatList
+        ref={listRef}
         data={resources}
         keyExtractor={(i) => i.id}
         renderItem={renderCard}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         contentContainerStyle={{ paddingBottom: 160, paddingHorizontal: 16 }}
+        onScrollToIndexFailed={() => { }}
       />
 
       <Modal visible={imageModalVisible} transparent>
-        <Pressable style={styles.lightbox} onPress={() => setImageModalVisible(false)}>
+        <Pressable
+          style={styles.lightbox}
+          onPress={() => setImageModalVisible(false)}
+        >
           {selectedImage && (
             <Image
               source={{ uri: selectedImage }}
@@ -365,4 +441,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-});
+}); 

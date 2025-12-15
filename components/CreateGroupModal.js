@@ -46,6 +46,8 @@ export default function CreateGroupModal({ visible, onClose, onSave }) {
             imageBase64: image?.base64 || null,
             members: 1,
             joinedBy: [],
+            createdBy: auth.currentUser?.uid ?? null,
+            createdAt: Date.now(),
         });
 
         setName("");
@@ -53,8 +55,10 @@ export default function CreateGroupModal({ visible, onClose, onSave }) {
         setDescription("");
         setTags("");
         setImage(null);
+
         addPoints(auth.currentUser?.uid, "createGroup");
     };
+
 
     return (
         <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>

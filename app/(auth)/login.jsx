@@ -20,7 +20,6 @@ import PasswordInput from "../../components/PasswordInput";
 import { loginWithEmail } from "../../auth/auth";
 import { loginWithGitHub } from "../../auth/githubAuth";
 
-// 🔥 ADDED
 import { createUserProfileIfNotExists } from "../../firebase/profile";
 
 const { width } = Dimensions.get("window");
@@ -63,7 +62,6 @@ export default function LoginScreen() {
                 return;
             }
 
-            // 🔥 CREATE PROFILE IF MISSING
             await createUserProfileIfNotExists(
                 result.user.uid,
                 result.user.email,
@@ -90,9 +88,7 @@ export default function LoginScreen() {
                 github: friendlyError(result.error),
             }));
             return;
-        }
-
-        // 🔥 CREATE PROFILE IF MISSING
+        } 
         await createUserProfileIfNotExists(
             result.user.uid,
             result.user.email,

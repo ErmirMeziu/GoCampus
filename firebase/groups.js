@@ -84,7 +84,7 @@ export async function createEventDB(event) {
       const group = groupSnap.data();
 
       if (group.ownerId !== uid) {
-        console.log("❌ Not authorized to create event");
+        console.log(" Not authorized to create event");
         return;
       }
     }
@@ -95,4 +95,34 @@ export async function createEventDB(event) {
     createdAt: Date.now(),
   });
 }
+
+export const listenUpcomingEventsForUser = (userId, callback) => {
+  const unsubGroups = listenGroups((groups) => {
+    const joinedGroupIds = new Set(
+      groups
+        .filter(g => g.joinedBy?.includes(userId))
+        .map(g => g.id)
+    );
+
+    const unsubEvents = listenEvents((events) => {
+      const now = new Date();
+
+      const filtered = events.filter(e => {
+        const d = e.date?.toDate?.() || new Date(e.date);
+        if (!d || d < now) return false;
+
+        if (!e.groupId) return true;
+
+        return joinedGroupIds.has(e.groupId);
+      });
+
+      callback(filtered);
+    });
+
+    return () => unsubEvents && unsubEvents();
+  });
+
+  return () => unsubGroups && unsubGroups();
+};
+
 

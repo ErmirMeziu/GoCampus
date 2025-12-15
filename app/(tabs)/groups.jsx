@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
 import { useTheme } from "../../context/ThemeProvider";
+import { useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
+
+
 
 import EditGroupModal from "../../components/EditGroupModal";
 import CreateGroupModal from "../../components/CreateGroupModal";
@@ -35,12 +39,18 @@ const CATEGORIES = ["All", "Tech", "Arts", "Study", "Sports", "Social"];
 
 export default function GroupsScreen() {
   const { theme, isDarkMode } = useTheme();
+  const { scrollTo } = useLocalSearchParams();
+
 
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("All");
 
   const [groups, setGroups] = useState([]);
   const [events, setEvents] = useState([]);
+  const [highlightId, setHighlightId] = useState(null);
+
+  const listRef = useRef(null);
+
 
   const [refreshing, setRefreshing] = useState(false);
   const [detailGroup, setDetailGroup] = useState(null);
@@ -50,6 +60,28 @@ export default function GroupsScreen() {
 
   const [createGroupVisible, setCreateGroupVisible] = useState(false);
   const [createEventVisible, setCreateEventVisible] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setQuery("");
+        setActiveCat("All");
+        setDetailGroup(null);
+
+        requestAnimationFrame(() => {
+          if (listRef.current) {
+            listRef.current.scrollToOffset({
+              offset: 0,
+              animated: false,
+            });
+          }
+        });
+      };
+    }, [])
+  );
+
+
+
 
   useEffect(() => {
     const unsubGroups = listenGroups((allGroups) => {
@@ -102,6 +134,28 @@ export default function GroupsScreen() {
       });
   }, [groups, query, activeCat]);
 
+  useEffect(() => {
+    if (!scrollTo) return;
+    if (!listRef.current) return;
+    if (filteredGroups.length === 0) return;
+
+    const index = filteredGroups.findIndex(g => g.id === scrollTo);
+    if (index === -1) return;
+
+    setTimeout(() => {
+      listRef.current?.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.45,
+      });
+
+      setHighlightId(scrollTo);
+      setTimeout(() => setHighlightId(null), 2000);
+    }, 350);
+  }, [scrollTo, filteredGroups]);
+
+
+
   const myGroups = useMemo(
     () => groups.filter((g) => g.ownerId === auth.currentUser?.uid),
     [groups]
@@ -122,364 +176,381 @@ export default function GroupsScreen() {
     setEditVisible(true);
   };
 
-  const pickImage = async () => {
-    const [img] = await pickImages(false);
-    return img ? img.uri : null;
-  };
-
   const renderEventCard = ({ item }) => <EventCard item={item} theme={theme} />;
 
-  const renderGroup = ({ item }) => (
-    <TouchableOpacity activeOpacity={0.9} onPress={() => setDetailGroup(item)}>
-      <GlassView
-        glassEffectStyle="clear"
-        intensity={60}
-        style={[styles.groupCard, { backgroundColor: theme.card }]}
-      >
-        {item.image && <Image source={{ uri: item.image }} style={styles.groupCover} />}
+  const renderGroup = ({ item }) => {
+    const isHighlighted = item.id === highlightId;
 
-        <View style={styles.groupBody}>
-          <View style={styles.titleRow}>
-            <Text style={[styles.title, { color: theme.textPrimary }]} numberOfLines={1}>
-              {item.name}
+    return (
+      <TouchableOpacity activeOpacity={0.9} onPress={() => setDetailGroup(item)}>
+        <GlassView
+          glassEffectStyle="clear"
+          intensity={isHighlighted ? 95 : 60}
+          style={[
+            styles.groupCard,
+            {
+              backgroundColor: isHighlighted
+                ? theme.primary + "22"
+                : theme.card,
+              shadowColor: isHighlighted ? theme.primary : "#000",
+              shadowOpacity: isHighlighted ? 0.35 : 0.08,
+              shadowRadius: isHighlighted ? 18 : 8,
+            },
+          ]}
+        >
+
+          {item.image && <Image source={{ uri: item.image }} style={styles.groupCover} />}
+
+          <View style={styles.groupBody}>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: theme.textPrimary }]} numberOfLines={1}>
+                {item.name}
+              </Text>
+
+              <View style={[styles.activityPill, { backgroundColor: theme.overlay }]}>
+                <Ionicons name="flame" size={12} color={theme.accent} />
+                <Text style={[styles.activityText, { color: theme.textPrimary }]}>
+                  {item.activity || 0}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.metaRow}>
+              <View style={styles.metaItem}>
+                <Ionicons name="people-outline" size={14} color={theme.textMuted} />
+                <Text style={[styles.metaText, { color: theme.textMuted }]}>
+                  {item.members} members
+                </Text>
+              </View>
+
+              <View style={styles.metaItem}>
+                <Ionicons name="pricetag-outline" size={14} color={theme.textMuted} />
+                <Text style={[styles.metaText, { color: theme.textMuted }]}>
+                  {item.category}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.desc, { color: theme.textMuted }]} numberOfLines={2}>
+              {item.description}
             </Text>
 
-            <View style={[styles.activityPill, { backgroundColor: theme.overlay }]}>
-              <Ionicons name="flame" size={12} color={theme.accent} />
-              <Text style={[styles.activityText, { color: theme.textPrimary }]}>
-                {item.activity || 0}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.metaRow}>
-            <View style={styles.metaItem}>
-              <Ionicons name="people-outline" size={14} color={theme.textMuted} />
-              <Text style={[styles.metaText, { color: theme.textMuted }]}>
-                {item.members} members
-              </Text>
+            <View style={styles.tagsRow}>
+              {item.tags?.map((t, i) => (
+                <View
+                  key={`${item.id}-tag-${i}`}
+                  style={[
+                    styles.tag,
+                    { borderColor: theme.border, backgroundColor: theme.overlay },
+                  ]}
+                >
+                  <Text style={{ color: theme.textPrimary, fontSize: 11 }}>{t}</Text>
+                </View>
+              ))}
             </View>
 
-            <View style={styles.metaItem}>
-              <Ionicons name="pricetag-outline" size={14} color={theme.textMuted} />
-              <Text style={[styles.metaText, { color: theme.textMuted }]}>
-                {item.category}
-              </Text>
+            <View style={styles.actionsRow}>
+              {item.ownerId !== auth.currentUser?.uid && (
+                <TouchableOpacity
+                  onPress={() => toggleJoin(item)}
+                  style={[
+                    styles.primaryBtn,
+                    { backgroundColor: item.joined ? theme.danger : theme.primary },
+                  ]}
+                >
+                  <Ionicons name={item.joined ? "log-out-outline" : "add"} size={18} color="#fff" />
+                  <Text style={styles.primaryText}>
+                    {item.joined ? "Leave" : "Join"}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
+        </GlassView>
+      </TouchableOpacity>
+    );
+  };
 
-          <Text style={[styles.desc, { color: theme.textMuted }]} numberOfLines={2}>
-            {item.description}
-          </Text>
+    const mainView = (
+      <>
+        <View style={styles.headerRow}>
+          <Text style={[styles.screenTitle, { color: theme.textPrimary }]}>Groups</Text>
 
-          <View style={styles.tagsRow}>
-            {item.tags?.map((t, i) => (
-              <View
-                key={`${item.id}-tag-${i}`}
-                style={[
-                  styles.tag,
-                  { borderColor: theme.border, backgroundColor: theme.overlay },
-                ]}
-              >
-                <Text style={{ color: theme.textPrimary, fontSize: 11 }}>{t}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.actionsRow}>
-            {item.ownerId !== auth.currentUser?.uid && (
+          <View style={{ flexDirection: "row" }}>
+            {detailGroup?.ownerId === auth.currentUser?.uid && (
               <TouchableOpacity
-                onPress={() => toggleJoin(item)}
-                style={[
-                  styles.primaryBtn,
-                  { backgroundColor: item.joined ? theme.danger : theme.primary },
-                ]}
+                style={styles.headerBtn}
+                onPress={() => setCreateEventVisible(true)}
               >
-                <Ionicons name={item.joined ? "log-out-outline" : "add"} size={18} color="#fff" />
-                <Text style={styles.primaryText}>
-                  {item.joined ? "Leave" : "Join"}
-                </Text>
+                <Ionicons name="calendar-outline" size={22} color={theme.primary} />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => setCreateGroupVisible(true)}
+            >
+              <Ionicons name="add-circle-outline" size={22} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <GlassView
+          intensity={60}
+          style={[styles.filterHeader, { backgroundColor: theme.card }]}
+        >
+          <View style={styles.searchRow}>
+            <Ionicons name="search" size={16} color={theme.textMuted} />
+            <TextInput
+              placeholder="Search groups, tags, topics…"
+              placeholderTextColor={theme.textMuted}
+              style={[styles.searchInput, { color: theme.textPrimary }]}
+              value={query}
+              onChangeText={setQuery}
+            />
+
+            {query.length > 0 && (
+              <TouchableOpacity onPress={() => setQuery("")}>
+                <Ionicons name="close-circle" size={18} color={theme.textMuted} />
               </TouchableOpacity>
             )}
           </View>
-        </View>
-      </GlassView>
-    </TouchableOpacity>
-  );
+        </GlassView>
 
-  // MAIN UI
-  const mainView = (
-    <>
-      <View style={styles.headerRow}>
-        <Text style={[styles.screenTitle, { color: theme.textPrimary }]}>Groups</Text>
-
-        <View style={{ flexDirection: "row" }}>
-          {detailGroup?.ownerId === auth.currentUser?.uid && (
+        <View style={styles.categoriesWrap}>
+          {CATEGORIES.map((cat) => (
             <TouchableOpacity
-              style={styles.headerBtn}
-              onPress={() => setCreateEventVisible(true)}
+              key={cat}
+              onPress={() => setActiveCat(cat)}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: activeCat === cat ? theme.primary : theme.overlay,
+                  borderColor: theme.border,
+                },
+              ]}
             >
-              <Ionicons name="calendar-outline" size={22} color={theme.primary} />
+              <Text
+                style={{
+                  color: activeCat === cat ? "#fff" : theme.textPrimary,
+                  fontWeight: "600",
+                  fontSize: 12,
+                }}
+              >
+                {cat}
+              </Text>
             </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => setCreateGroupVisible(true)}
-          >
-            <Ionicons name="add-circle-outline" size={22} color={theme.primary} />
-          </TouchableOpacity>
+          ))}
         </View>
-      </View>
 
-      <GlassView
-        intensity={60}
-        style={[styles.filterHeader, { backgroundColor: theme.card }]}
-      >
-        <View style={styles.searchRow}>
-          <Ionicons name="search" size={16} color={theme.textMuted} />
-          <TextInput
-            placeholder="Search groups, tags, topics…"
-            placeholderTextColor={theme.textMuted}
-            style={[styles.searchInput, { color: theme.textPrimary }]}
-            value={query}
-            onChangeText={setQuery}
-          />
+        <FlatList
+          ref={listRef}
+          data={filteredGroups}
+          keyExtractor={(item) => item.id}
+          renderItem={renderGroup}
+          onScrollToIndexFailed={(info) => {
+            requestAnimationFrame(() => {
+              listRef.current?.scrollToOffset({
+                offset: info.averageItemLength * info.index,
+                animated: true,
+              });
+            });
+          }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={{ paddingBottom: 200, paddingHorizontal: 16 }}
+          ListHeaderComponent={
+            <View>
+              {upcomingEvents.length > 0 && (
+                <>
+                  <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
+                    Upcoming Events
+                  </Text>
 
-          {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery("")}>
-              <Ionicons name="close-circle" size={18} color={theme.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </GlassView>
+                  <FlatList
+                    data={upcomingEvents}
+                    keyExtractor={(e) => e.id}
+                    horizontal
+                    renderItem={renderEventCard}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingRight: 16 }}
+                    style={{ marginBottom: 10 }}
+                  />
+                </>
+              )}
 
-      <View style={styles.categoriesWrap}>
-        {CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            onPress={() => setActiveCat(cat)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: activeCat === cat ? theme.primary : theme.overlay,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            <Text
-              style={{
-                color: activeCat === cat ? "#fff" : theme.textPrimary,
-                fontWeight: "600",
-                fontSize: 12,
-              }}
-            >
-              {cat}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              {myGroups.length > 0 && (
+                <View style={{ marginTop: 6, marginBottom: 10 }}>
+                  <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
+                    My Groups
+                  </Text>
 
-      <FlatList
-        data={filteredGroups}
-        keyExtractor={(item) => item.id}
-        renderItem={renderGroup}
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={{ paddingBottom: 200, paddingHorizontal: 16 }}
-        ListHeaderComponent={
-          <View>
-            {upcomingEvents.length > 0 && (
-              <>
-                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-                  Upcoming Events
-                </Text>
+                  <FlatList
+                    data={myGroups}
+                    horizontal
+                    keyExtractor={(g) => g.id}
+                    renderItem={({ item: g }) => (
+                      <TouchableOpacity onPress={() => openEditMyGroup(g)}>
+                        <GlassView
+                          glassEffectStyle="clear"
+                          intensity={50}
+                          style={[styles.miniCard, { backgroundColor: theme.card }]}
+                        >
+                          {g.image && (
+                            <Image source={{ uri: g.image }} style={styles.miniCover} />
+                          )}
 
-                <FlatList
-                  data={upcomingEvents}
-                  keyExtractor={(e) => e.id}
-                  horizontal
-                  renderItem={renderEventCard}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingRight: 16 }}
-                  style={{ marginBottom: 10 }}
-                />
-              </>
-            )}
-
-            {myGroups.length > 0 && (
-              <View style={{ marginTop: 6, marginBottom: 10 }}>
-                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-                  My Groups
-                </Text>
-
-                <FlatList
-                  data={myGroups}
-                  horizontal
-                  keyExtractor={(g) => g.id}
-                  renderItem={({ item: g }) => (
-                    <TouchableOpacity onPress={() => openEditMyGroup(g)}>
-                      <GlassView
-                        glassEffectStyle="clear"
-                        intensity={50}
-                        style={[styles.miniCard, { backgroundColor: theme.card }]}
-                      >
-                        {g.image && (
-                          <Image source={{ uri: g.image }} style={styles.miniCover} />
-                        )}
-
-                        <View style={{ padding: 10 }}>
-                          <Text
-                            style={[styles.miniTitle, { color: theme.textPrimary }]}
-                            numberOfLines={1}
-                          >
-                            {g.name}
-                          </Text>
-
-                          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
-                            <Ionicons name="people-outline" size={12} color={theme.textMuted} />
-                            <Text style={[styles.miniMeta, { color: theme.textMuted }]}>
-                              {" "}
-                              {g.members}
+                          <View style={{ padding: 10 }}>
+                            <Text
+                              style={[styles.miniTitle, { color: theme.textPrimary }]}
+                              numberOfLines={1}
+                            >
+                              {g.name}
                             </Text>
+
+                            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
+                              <Ionicons name="people-outline" size={12} color={theme.textMuted} />
+                              <Text style={[styles.miniMeta, { color: theme.textMuted }]}>
+                                {" "}
+                                {g.members}
+                              </Text>
+                            </View>
                           </View>
-                        </View>
-                      </GlassView>
-                    </TouchableOpacity>
-                  )}
-                  ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingRight: 16 }}
-                />
-              </View>
-            )}
-          </View>
-        }
-      />
-    </>
-  );
-
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ImageBackground
-        source={
-          isDarkMode
-            ? require("../../assets/backgrounds/dark.png")
-            : require("../../assets/backgrounds/light.png")
-        }
-        style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
-      />
-
-      {!detailGroup ? (
-        mainView
-      ) : (
-        <GroupDetail
-          group={detailGroup}
-          onBack={() => setDetailGroup(null)}
-          theme={theme}
-          events={events.filter((e) => e.groupId === detailGroup.id)}
-          onJoinToggle={() => toggleJoin(detailGroup)}
-          onCreateEvent={() => setCreateEventVisible(true)}
+                        </GlassView>
+                      </TouchableOpacity>
+                    )}
+                    ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingRight: 16 }}
+                  />
+                </View>
+              )}
+            </View>
+          }
         />
-      )}
+      </>
+    );
 
-      {editVisible && selectedGroup && (
-        <EditGroupModal
-          visible={editVisible}
-          onClose={() => setEditVisible(false)}
-          group={selectedGroup}
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <ImageBackground
+          source={
+            isDarkMode
+              ? require("../../assets/backgrounds/dark.png")
+              : require("../../assets/backgrounds/light.png")
+          }
+          style={StyleSheet.absoluteFillObject}
+          resizeMode="cover"
         />
-      )}
 
-      {createGroupVisible && (
-        <CreateGroupModal
-          visible={createGroupVisible}
-          onClose={() => setCreateGroupVisible(false)}
-          onSave={(payload) => createGroupDB(payload)}
-        />
-      )}
+        {!detailGroup ? (
+          mainView
+        ) : (
+          <GroupDetail
+            group={detailGroup}
+            onBack={() => setDetailGroup(null)}
+            theme={theme}
+            events={events.filter((e) => e.groupId === detailGroup.id)}
+            onJoinToggle={() => toggleJoin(detailGroup)}
+            onCreateEvent={() => setCreateEventVisible(true)}
+          />
+        )}
 
-      {createEventVisible && (
-        <CreateEventModal
-          visible={createEventVisible}
-          onClose={() => setCreateEventVisible(false)}
-          onSave={(payload) => createEventDB(payload)}
+        {editVisible && selectedGroup && (
+          <EditGroupModal
+            visible={editVisible}
+            onClose={() => setEditVisible(false)}
+            group={selectedGroup}
+          />
+        )}
 
-          // ✔ FIX APPLIED — only the groups YOU OWN
-          groups={[
-            { id: null, name: "No group" },
-            ...groups
-              .filter((g) => g.ownerId === auth.currentUser?.uid)
-              .map((g) => ({ id: g.id, name: g.name }))
-          ]}
-        />
-      )}
-    </View>
-  );
-}
+        {createGroupVisible && (
+          <CreateGroupModal
+            visible={createGroupVisible}
+            onClose={() => setCreateGroupVisible(false)}
+            onSave={(payload) => createGroupDB(payload)}
+          />
+        )}
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  headerRow: {
-    marginTop: 45,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  screenTitle: { fontSize: 24, fontWeight: "700" },
-  headerBtn: { padding: 6, marginLeft: 8 },
-  filterHeader: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 10,
-  },
-  searchRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  searchInput: { flex: 1, fontSize: 14 },
-  categoriesWrap: { flexDirection: "row", flexWrap: "wrap", alignSelf: "center" },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginHorizontal: 4,
-    marginBottom: 8,
-    borderWidth: 1,
-  },
-  sectionTitle: { fontSize: 16, fontWeight: "700", marginHorizontal: 16, marginBottom: 8 },
-  miniCard: { width: 170, borderRadius: 16, overflow: "hidden" },
-  miniCover: { width: "100%", height: 86 },
-  miniTitle: { fontSize: 13, fontWeight: "700" },
-  miniMeta: { fontSize: 11 },
-  groupCard: { borderRadius: 18, overflow: "hidden", marginBottom: 14 },
-  groupCover: { width: "100%", height: 150 },
-  groupBody: { padding: 12 },
-  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  title: { fontSize: 16, fontWeight: "700", flex: 1, paddingRight: 8 },
-  activityPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
-  activityText: { marginLeft: 4, fontWeight: "700", fontSize: 12 },
-  metaRow: { flexDirection: "row", marginTop: 8 },
-  metaItem: { flexDirection: "row", alignItems: "center", marginRight: 14 },
-  metaText: { marginLeft: 6, fontSize: 12 },
-  desc: { marginTop: 8, fontSize: 12, lineHeight: 17 },
-  tagsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: 10 },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 6,
-    borderWidth: 1,
-  },
-  actionsRow: { flexDirection: "row", marginTop: 12, justifyContent: "flex-end" },
-  primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  primaryText: { marginLeft: 8, color: "#fff", fontWeight: "700", fontSize: 14 },
-});
+        {createEventVisible && (
+          <CreateEventModal
+            visible={createEventVisible}
+            onClose={() => setCreateEventVisible(false)}
+            onSave={(payload) => createEventDB(payload)}
+
+            groups={[
+              { id: null, name: "No group" },
+              ...groups
+                .filter((g) => g.ownerId === auth.currentUser?.uid)
+                .map((g) => ({ id: g.id, name: g.name }))
+            ]}
+          />
+        )}
+      </View>
+    );
+  }
+
+  const styles = StyleSheet.create({
+    container: { flex: 1 },
+    headerRow: {
+      marginTop: 45,
+      paddingHorizontal: 16,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    screenTitle: { fontSize: 24, fontWeight: "700" },
+    headerBtn: { padding: 6, marginLeft: 8 },
+    filterHeader: {
+      marginHorizontal: 16,
+      marginTop: 12,
+      borderRadius: 16,
+      padding: 12,
+      marginBottom: 10,
+    },
+    searchRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    searchInput: { flex: 1, fontSize: 14 },
+    categoriesWrap: { flexDirection: "row", flexWrap: "wrap", alignSelf: "center" },
+    chip: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+      marginHorizontal: 4,
+      marginBottom: 8,
+      borderWidth: 1,
+    },
+    sectionTitle: { fontSize: 16, fontWeight: "700", marginHorizontal: 16, marginBottom: 8 },
+    miniCard: { width: 170, borderRadius: 16, overflow: "hidden" },
+    miniCover: { width: "100%", height: 86 },
+    miniTitle: { fontSize: 13, fontWeight: "700" },
+    miniMeta: { fontSize: 11 },
+    groupCard: { borderRadius: 18, overflow: "hidden", marginBottom: 14 },
+    groupCover: { width: "100%", height: 150 },
+    groupBody: { padding: 12 },
+    titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    title: { fontSize: 16, fontWeight: "700", flex: 1, paddingRight: 8 },
+    activityPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20 },
+    activityText: { marginLeft: 4, fontWeight: "700", fontSize: 12 },
+    metaRow: { flexDirection: "row", marginTop: 8 },
+    metaItem: { flexDirection: "row", alignItems: "center", marginRight: 14 },
+    metaText: { marginLeft: 6, fontSize: 12 },
+    desc: { marginTop: 8, fontSize: 12, lineHeight: 17 },
+    tagsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: 10 },
+    tag: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 12,
+      marginRight: 8,
+      marginBottom: 6,
+      borderWidth: 1,
+    },
+    actionsRow: { flexDirection: "row", marginTop: 12, justifyContent: "flex-end" },
+    primaryBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+    },
+    primaryText: { marginLeft: 8, color: "#fff", fontWeight: "700", fontSize: 14 },
+  });
