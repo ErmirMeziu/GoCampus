@@ -8,20 +8,24 @@ import {
     StyleSheet,
     ScrollView,
     Image,
-    KeyboardAvoidingView,
     TouchableWithoutFeedback,
     TouchableOpacity as TouchOutside,
     Keyboard,
-    Platform
+    
 } from "react-native";
 import { GlassView } from "expo-glass-effect";
 import { pickImages } from "../utils/imageUtils";
 import { addPoints } from "../firebase/points";
 import { auth } from "../firebase/config";
+import { Animated } from "react-native";
+import { useFadeModal } from "../animations/useFadeModal";
+
+
 
 const CATEGORIES = ["Tech", "Arts", "Study", "Sports", "Social"];
 
 export default function CreateGroupModal({ visible, onClose, onSave }) {
+    const { overlayStyle, modalStyle } = useFadeModal(visible);
     const [name, setName] = useState("");
     const [category, setCategory] = useState("Tech");
     const [description, setDescription] = useState("");
@@ -61,120 +65,139 @@ export default function CreateGroupModal({ visible, onClose, onSave }) {
 
 
     return (
-        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <Modal transparent visible={visible} onRequestClose={onClose}>
+            <Animated.View
+                style={[    
+                    StyleSheet.absoluteFill,
+                    styles.overlay,
+                    overlayStyle,
+                ]}
+            />
 
-            <TouchOutside
-                activeOpacity={1}
-                style={styles.overlay}
-                onPress={onClose}
-            >
+            <View style={styles.overlay} pointerEvents="box-none">
+              
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={StyleSheet.absoluteFill}
+                    onPress={onClose}
+                />
 
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={{ width: "100%" }}
-                >
+                    <Animated.View style={modalStyle}>
+                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                            <GlassView style={styles.card} intensity={90}>
+                                <Text style={styles.title}>Create Group</Text>
 
-                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                        <GlassView style={styles.card} intensity={90}>
+                                <ScrollView showsVerticalScrollIndicator={false}>
+                                    <TextInput
+                                        placeholder="Group name"
+                                        placeholderTextColor="#aaa"
+                                        style={styles.input}
+                                        value={name}
+                                        onChangeText={setName}
+                                    />
 
-                            <Text style={styles.title}>Create Group</Text>
+                                    <View style={styles.chipsRow}>
+                                        {CATEGORIES.map((c) => (
+                                            <TouchableOpacity
+                                                key={c}
+                                                onPress={() => setCategory(c)}
+                                                style={[
+                                                    styles.chip,
+                                                    {
+                                                        backgroundColor:
+                                                            category === c
+                                                                ? "#0072ff"
+                                                                : "rgba(255,255,255,0.15)",
+                                                    },
+                                                ]}
+                                            >
+                                                <Text style={{ color: "#fff", fontWeight: "600" }}>
+                                                    {c}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
 
-                            <ScrollView showsVerticalScrollIndicator={false}>
-                                <TextInput
-                                    placeholder="Group name"
-                                    placeholderTextColor="#aaa"
-                                    style={styles.input}
-                                    value={name}
-                                    onChangeText={setName}
-                                />
+                                    <TextInput
+                                        placeholder="Description"
+                                        placeholderTextColor="#aaa"
+                                        style={[styles.input, { height: 90 }]}
+                                        value={description}
+                                        onChangeText={setDescription}
+                                        multiline
+                                    />
 
-                                <View style={styles.chipsRow}>
-                                    {CATEGORIES.map((c) => (
+                                    <TextInput
+                                        placeholder="Tags (comma separated)"
+                                        placeholderTextColor="#aaa"
+                                        style={styles.input}
+                                        value={tags}
+                                        onChangeText={setTags}
+                                    />
+
+                                    <TouchableOpacity
+                                        style={styles.imagePicker}
+                                        onPress={handlePickImage}
+                                    >
+                                        <Text style={styles.imagePickerText}>
+                                            {image ? "Change Cover Image" : "Pick Cover Image"}
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                    {image && (
+                                        <Image
+                                            source={{ uri: image.uri }}
+                                            style={styles.preview}
+                                        />
+                                    )}
+
+                                    <View style={styles.row}>
                                         <TouchableOpacity
-                                            key={c}
-                                            onPress={() => setCategory(c)}
                                             style={[
-                                                styles.chip,
-                                                {
-                                                    backgroundColor:
-                                                        category === c ? "#0072ff" : "rgba(255,255,255,0.15)"
-                                                }
+                                                styles.btn,
+                                                { backgroundColor: "rgba(255,255,255,0.25)" },
                                             ]}
+                                            onPress={onClose}
                                         >
-                                            <Text style={{ color: "#fff", fontWeight: "600" }}>{c}</Text>
+                                            <Text style={styles.btnText}>Cancel</Text>
                                         </TouchableOpacity>
-                                    ))}
-                                </View>
 
-                                <TextInput
-                                    placeholder="Description"
-                                    placeholderTextColor="#aaa"
-                                    style={[styles.input, { height: 90 }]}
-                                    value={description}
-                                    onChangeText={setDescription}
-                                    multiline
-                                />
-
-                                <TextInput
-                                    placeholder="Tags (comma separated)"
-                                    placeholderTextColor="#aaa"
-                                    style={styles.input}
-                                    value={tags}
-                                    onChangeText={setTags}
-                                />
-
-                                <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage}>
-                                    <Text style={styles.imagePickerText}>
-                                        {image ? "Change Cover Image" : "Pick Cover Image"}
-                                    </Text>
-                                </TouchableOpacity>
-
-                                {image && (
-                                    <Image source={{ uri: image.uri }} style={styles.preview} />
-                                )}
-
-                                <View style={styles.row}>
-                                    <TouchableOpacity
-                                        style={[styles.btn, { backgroundColor: "rgba(255,255,255,0.25)" }]}
-                                        onPress={onClose}
-                                    >
-                                        <Text style={styles.btnText}>Cancel</Text>
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.btn,
-                                            { backgroundColor: "#0072ff", opacity: name.trim() ? 1 : 0.5 }
-                                        ]}
-                                        onPress={handleCreate}
-                                        disabled={!name.trim()}
-                                    >
-                                        <Text style={styles.btnText}>Create</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </ScrollView>
-
-                        </GlassView>
-                    </TouchableWithoutFeedback>
-
-                </KeyboardAvoidingView>
-
-            </TouchOutside>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.btn,
+                                                {
+                                                    backgroundColor: "#0072ff",
+                                                    opacity: name.trim() ? 1 : 0.5,
+                                                },
+                                            ]}
+                                            onPress={handleCreate}
+                                            disabled={!name.trim()}
+                                        >
+                                            <Text style={styles.btnText}>Create</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </ScrollView>
+                            </GlassView>
+                        </TouchableWithoutFeedback>
+                    </Animated.View>
+             
+            </View>
         </Modal>
     );
+
 }
 
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
         padding: 16,
-        justifyContent: "flex-end",
+        justifyContent: "center",
         backgroundColor: "rgba(0,0,0,0.35)"
     },
     card: {
         borderRadius: 18,
         padding: 16,
-        maxHeight: "85%",
+        maxHeight: "100%",
         bottom: 5
     },
     title: {

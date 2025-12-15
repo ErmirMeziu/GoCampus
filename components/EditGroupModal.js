@@ -11,11 +11,19 @@ import {
 import { GlassView } from "expo-glass-effect";
 import { Ionicons } from "@expo/vector-icons";
 import { updateGroupDB, deleteGroupDB } from "../firebase/groups";
+import { Animated } from "react-native";
+import { useFadeModal } from "../animations/useFadeModal";
+import { Alert } from "react-native";
+
 
 export default function EditGroupModal({ visible, onClose, group }) {
+  const { overlayStyle, modalStyle } = useFadeModal(visible);
+
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [tags, setTags] = useState("");
+
+
 
   useEffect(() => {
     if (group) {
@@ -39,79 +47,142 @@ export default function EditGroupModal({ visible, onClose, group }) {
     onClose();
   };
 
-  const handleDelete = async () => {
-    await deleteGroupDB(group.id);
+  const handleDelete = () => {
+    
     onClose();
+
+ 
+    setTimeout(() => {
+      Alert.alert(
+        "Delete Group",
+        `Are you sure you want to delete "${group.name}"?\nThis action cannot be undone.`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              await deleteGroupDB(group.id);
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+    }, 250); 
   };
 
+
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <GlassView style={styles.modal} intensity={90}>
-          <Text style={styles.title}>Edit Group</Text>
+    <Modal transparent visible={visible} onRequestClose={onClose}>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Group name"
-              placeholderTextColor="#aaa"
-              style={styles.input}
-            />
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          styles.backdrop,
+          overlayStyle,
+        ]}
+      />
 
-            <TextInput
-              value={desc}
-              onChangeText={setDesc}
-              placeholder="Description"
-              placeholderTextColor="#aaa"
-              style={[styles.input, { height: 100 }]}
-              multiline
-            />
+      <View style={styles.overlay} pointerEvents="box-none">
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={onClose}
+        />
 
-            <TextInput
-              value={tags}
-              onChangeText={setTags}
-              placeholder="Tags (comma separated)"
-              placeholderTextColor="#aaa"
-              style={styles.input}
-            />
+        <Animated.View style={modalStyle}>
+          <GlassView style={styles.modal} intensity={90}>
+            <Text style={styles.title}>Edit Group</Text>
 
-            <View style={styles.tagPreview}>
-              {tags
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean)
-                .map((t, i) => (
-                  <View key={i} style={styles.tagChip}>
-                    <Text style={styles.tagText}>#{t}</Text>
-                  </View>
-                ))}
-            </View>
+            {!group ? (
+              <Text style={{ color: "#fff", textAlign: "center" }}>
+                Loading...
+              </Text>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Group name"
+                  placeholderTextColor="#aaa"
+                  style={styles.input}
+                />
 
-            <View style={styles.buttons}>
-              <TouchableOpacity style={styles.cancel} onPress={onClose}>
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
+                <TextInput
+                  value={desc}
+                  onChangeText={setDesc}
+                  placeholder="Description"
+                  placeholderTextColor="#aaa"
+                  style={[styles.input, { height: 100 }]}
+                  multiline
+                />
 
-              <TouchableOpacity style={styles.save} onPress={handleSave}>
-                <Text style={styles.saveText}>Save</Text>
-              </TouchableOpacity>
-            </View>
+                <TextInput
+                  value={tags}
+                  onChangeText={setTags}
+                  placeholder="Tags (comma separated)"
+                  placeholderTextColor="#aaa"
+                  style={styles.input}
+                />
 
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-              <Ionicons name="trash-outline" size={18} color="#fff" />
-              <Text style={styles.deleteText}>Delete Group</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </GlassView>
+                <View style={styles.tagPreview}>
+                  {tags
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .map((t, i) => (
+                      <View key={i} style={styles.tagChip}>
+                        <Text style={styles.tagText}>#{t}</Text>
+                      </View>
+                    ))}
+                </View>
+
+                <View style={styles.buttons}>
+                  <TouchableOpacity
+                    style={styles.cancel}
+                    onPress={onClose}
+                  >
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.save}
+                    onPress={handleSave}
+                  >
+                    <Text style={styles.saveText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.deleteBtn}
+                  onPress={handleDelete}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={18}
+                    color="#fff"
+                  />
+                  <Text style={styles.deleteText}>
+                    Delete Group
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </GlassView>
+        </Animated.View>
       </View>
     </Modal>
   );
+
 }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.6)" },
-  modal: { width: "88%", borderRadius: 22, padding: 20, maxHeight: "80%" },
+  modal: { width: "100%", borderRadius: 22, padding: 20, maxHeight: "100%" },
   title: { fontSize: 20, fontWeight: "700", marginBottom: 16, color: "#fff", textAlign: "center" },
   input: { backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", borderRadius: 10, padding: 10, marginBottom: 12, fontSize: 14 },
   tagPreview: { flexDirection: "row", flexWrap: "wrap", marginTop: 4, marginBottom: 10 },

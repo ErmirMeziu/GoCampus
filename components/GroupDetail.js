@@ -24,7 +24,7 @@ export default function GroupDetail({
       ? `data:image/jpeg;base64,${group.imageBase64}`
       : group.image || null;
 
-  // 🟢 This helps make UI update instantly after join
+  
   const isJoined = group.joined;
 
   return (
@@ -33,7 +33,6 @@ export default function GroupDetail({
         <Ionicons name="arrow-back" size={22} color="#fff" />
       </TouchableOpacity>
 
-      {/* COVER */}
       {imageUri ? (
         <Image source={{ uri: imageUri }} style={styles.cover} />
       ) : (
@@ -51,7 +50,6 @@ export default function GroupDetail({
         </View>
       )}
 
-      {/* BODY */}
       <View style={styles.body}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>
           {group.name}
@@ -67,7 +65,6 @@ export default function GroupDetail({
           </Text>
         )}
 
-        {/* TAGS */}
         <View style={styles.tagsRow}>
           {group.tags?.map((t, i) => (
             <View
@@ -82,16 +79,15 @@ export default function GroupDetail({
           ))}
         </View>
 
-        {/* ACTIONS */}
         <View style={styles.actions}>
 
-          {/* SHOW JOIN ONLY IF: user is NOT owner AND NOT already joined */}
+       
           {!isJoined && group.ownerId !== auth.currentUser?.uid && (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: theme.primary }]}
               onPress={() => {
-                onJoinToggle();     // 🔥 call join
-                group.joined = true; // 🔥 instantly hide Join button locally
+                onJoinToggle();     
+                group.joined = true; 
               }}
             >
               <Ionicons name="add" size={18} color="#fff" />
@@ -99,7 +95,6 @@ export default function GroupDetail({
             </TouchableOpacity>
           )}
 
-          {/* OWNER CAN ADD EVENTS */}
           {group.ownerId === auth.currentUser?.uid && (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: theme.primary }]}
@@ -111,7 +106,7 @@ export default function GroupDetail({
           )}
         </View>
 
-        {/* EVENTS */}
+  
         <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
           Upcoming Events
         </Text>

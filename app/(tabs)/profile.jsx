@@ -35,7 +35,7 @@ export default function ProfileScreen() {
 
  const pickImg = async () => {
   try {
-    // Request permission to access the camera and media library
+    
     const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
     const galleryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -44,7 +44,7 @@ export default function ProfileScreen() {
       return;
     }
 
-    // Ask the user if they want to take a photo or pick from the gallery
+
     const result = await new Promise((resolve) =>
       Alert.alert(
         "Select Image",
@@ -55,9 +55,9 @@ export default function ProfileScreen() {
             onPress: async () => {
               const picked = await ImagePicker.launchCameraAsync({
                 allowsEditing: true,
-                aspect: [1, 1], // Optional, set the aspect ratio of the image
-                quality: 1, // Quality of the image
-                base64: true, // Return the image in base64
+                aspect: [1, 1], 
+                quality: 1, 
+                base64: true, 
               });
               resolve(picked);
             },
@@ -67,9 +67,9 @@ export default function ProfileScreen() {
             onPress: async () => {
               const picked = await ImagePicker.launchImageLibraryAsync({
                 allowsEditing: true,
-                aspect: [1, 1], // Optional, set the aspect ratio of the image
-                quality: 1, // Quality of the image
-                base64: true, // Return the image in base64
+                aspect: [1, 1], 
+                quality: 1, 
+                base64: true, 
               });
               resolve(picked);
             },
@@ -82,16 +82,14 @@ export default function ProfileScreen() {
 
     if (!result || result.cancelled) return;
 
-    // If a photo is taken or picked from the gallery, upload it
     const photoBase64 = result.assets[0].base64;
 
-    // Upload the photo to Firebase
     await updateUserProfile(user.uid, {
-      photoURL: `data:image/jpeg;base64,${photoBase64}`, // Save the base64 string
+      photoURL: `data:image/jpeg;base64,${photoBase64}`, 
     });
 
   } catch (e) {
-    alert(e.message); // Handle any errors that occur
+    alert(e.message); 
   }
 };
 

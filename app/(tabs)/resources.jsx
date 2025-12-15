@@ -15,6 +15,8 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { Alert } from "react-native";
+
 import { useFocusEffect } from "@react-navigation/native";
 
 import { GlassView } from "expo-glass-effect";
@@ -58,6 +60,26 @@ export default function ResourceSharingScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [highlightId, setHighlightId] = useState(null);
 
+  const confirmDeleteResource = (resource) => {
+    Alert.alert(
+      "Delete Resource",
+      `Are you sure you want to delete "${resource.title}"?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDeleteResource(resource.id),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -79,7 +101,7 @@ export default function ResourceSharingScreen() {
         setQuery("");
         setActiveCat("All");
         setHighlightId(null);
-        setResources(prev => prev); 
+        setResources(prev => prev);
         requestAnimationFrame(() => {
           listRef.current?.scrollToOffset({ offset: 0, animated: false });
         });
@@ -214,8 +236,9 @@ export default function ResourceSharingScreen() {
 
                 <TouchableOpacity
                   style={{ marginLeft: 8 }}
-                  onPress={() => handleDeleteResource(item.id)}
+                  onPress={() => confirmDeleteResource(item)}
                 >
+
                   <Ionicons name="trash-outline" size={18} color="red" />
                 </TouchableOpacity>
               </View>
