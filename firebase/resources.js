@@ -16,7 +16,6 @@ const RESOURCES = collection(db, "resources");
 
 export const createResource = async (payload) => {
   const cleaned = {};
-
   for (const key in payload) {
     if (payload[key] !== undefined && payload[key] !== null) {
       cleaned[key] = payload[key];

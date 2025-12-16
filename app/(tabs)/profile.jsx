@@ -11,6 +11,8 @@ import ChangePasswordModal from "../../components/ChangePasswordModal";
 import { router } from "expo-router";
 import { Alert } from 'react-native';
 import { listenUserProfile, updateUserProfile } from "../../firebase/profile";
+import FadeButton from "../../components/FadeButton";
+
 import {
   GithubAuthProvider,
   linkWithPopup,
@@ -157,7 +159,7 @@ export default function ProfileScreen() {
 
       <ScrollView contentContainerStyle={s.scroll}>
         <View style={{ alignItems: "center", paddingVertical: 35 }}>
-          <TouchableOpacity onPress={pickImg}>
+          <FadeButton onPress={pickImg}>
             <Image
               source={{ uri: userData.photoURL || "https://i.pravatar.cc/300" }}
               style={{ width: 120, height: 120, borderRadius: 70, borderWidth: 2, borderColor: theme.primary }}
@@ -165,7 +167,7 @@ export default function ProfileScreen() {
             <View style={[s.cameraBadge,{backgroundColor:theme.primary}]}>
               <Ionicons name="camera" size={18} color="#fff" />
             </View>
-          </TouchableOpacity>
+          </FadeButton>
 
           <Text style={{ color: theme.textPrimary, fontSize: 24, fontWeight: "700", marginTop: 12 }}>
             {userData.name}

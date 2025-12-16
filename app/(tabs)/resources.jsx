@@ -25,6 +25,7 @@ import { useLocalSearchParams } from "expo-router";
 
 import { pickImages, restoreImages, cleanData } from "../../utils/imageUtils";
 import CreateResourceModal from "../../components/CreateResourceModal";
+import FadeButton from "../../components/FadeButton";
 
 import {
   listenAllResources,
@@ -225,22 +226,18 @@ export default function ResourceSharingScreen() {
 
             {item.ownerId === auth.currentUser.uid && (
               <View style={{ flexDirection: "row" }}>
-                <TouchableOpacity
+                <FadeButton
                   onPress={() => {
                     setEditTarget(item);
                     setEditVisible(true);
                   }}
                 >
                   <Ionicons name="create-outline" size={18} color={theme.primary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={{ marginLeft: 8 }}
-                  onPress={() => confirmDeleteResource(item)}
-                >
-
+                </FadeButton>   
+                
+                <FadeButton onPress={() => confirmDeleteResource(item)}>
                   <Ionicons name="trash-outline" size={18} color="red" />
-                </TouchableOpacity>
+                </FadeButton>
               </View>
             )}
           </View>
@@ -311,9 +308,9 @@ export default function ResourceSharingScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>Resources</Text>
 
-        <TouchableOpacity onPress={() => setCreateVisible(true)}>
+        <FadeButton onPress={() => setCreateVisible(true)}>
           <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
-        </TouchableOpacity>
+        </FadeButton>
       </View>
 
       <GlassView intensity={60} style={[styles.searchBar, { backgroundColor: theme.card }]}>

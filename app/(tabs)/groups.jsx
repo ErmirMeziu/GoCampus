@@ -23,6 +23,7 @@ import CreateGroupModal from "../../components/CreateGroupModal";
 import CreateEventModal from "../../components/CreateEventModal";
 import GroupDetail from "../../components/GroupDetail";
 import EventCard from "../../components/EventCard";
+import FadeButton from "../../components/FadeButton";
 
 import {
   listenGroups,
@@ -251,18 +252,24 @@ export default function GroupsScreen() {
 
             <View style={styles.actionsRow}>
               {item.ownerId !== auth.currentUser?.uid && (
-                <TouchableOpacity
-                  onPress={() => toggleJoin(item)}
-                  style={[
+                <FadeButton onPress={() => toggleJoin(item)}>
+                  <View
+                    style={[
                     styles.primaryBtn,
                     { backgroundColor: item.joined ? theme.danger : theme.primary },
-                  ]}
-                >
-                  <Ionicons name={item.joined ? "log-out-outline" : "add"} size={18} color="#fff" />
+                    ]}
+                  >
+                  <Ionicons
+                    name={item.joined ? "log-out-outline" : "add"}
+                    size={18}
+                    color="#fff"
+                  />
                   <Text style={styles.primaryText}>
                     {item.joined ? "Leave" : "Join"}
                   </Text>
-                </TouchableOpacity>
+                  </View>
+                </FadeButton>
+
               )}
             </View>
           </View>
@@ -286,12 +293,12 @@ export default function GroupsScreen() {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={styles.headerBtn}
-              onPress={() => setCreateGroupVisible(true)}
-            >
-              <Ionicons name="add-circle-outline" size={22} color={theme.primary} />
-            </TouchableOpacity>
+            <FadeButton onPress={() => setCreateGroupVisible(true)}>
+              <View style={styles.headerBtn}>
+                <Ionicons name="add-circle-outline" size={22} color={theme.primary} />
+              </View>
+            </FadeButton>
+
           </View>
         </View>
 

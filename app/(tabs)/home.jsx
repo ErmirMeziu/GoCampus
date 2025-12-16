@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, ImageBackground, ActivityIndicator, Image } from "react-native";
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, ImageBackground, ActivityIndicator, Image,Share } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeProvider";
 import { GlassView } from "expo-glass-effect";
@@ -13,6 +13,7 @@ import { restoreImages } from "../../utils/imageUtils";
 import { calculateCategoryInsights } from "../../components/Insights";
 import CourseCompanion from "../../components/CourseCompanion";
 import { useFocusEffect } from "@react-navigation/native";
+import FadeButton from "../../components/FadeButton";
 
 const getItemDate = (item) => {
   if (!item) return null;
@@ -125,6 +126,31 @@ export default function HomeScreen() {
     ).then(() => setUserProfiles(cache));
   }, [recentUpdates]);
 
+
+  const shareEvent = async (event) => {
+  try {
+    const message = `
+🎓 GoCampus Event
+
+📌 ${event.title}
+📍 ${event.location || "Campus"}
+📅 ${event.date || "To be announced"}
+
+👉 Open in GoCampus:
+gocampus://event/${event.id}
+
+🌐 Web link:
+https://gocampus.app/event/${event.id}
+    `;
+
+    await Share.share({ message });
+  } catch (error) {
+    console.log("Share failed:", error);
+  }
+};
+
+
+
   return (
     <View style={styles.container}>
       <ImageBackground source={isDarkMode ? require("../../assets/backgrounds/dark.png") : require("../../assets/backgrounds/light.png")} style={StyleSheet.absoluteFillObject} />
@@ -190,6 +216,12 @@ export default function HomeScreen() {
                         {item?.title}
                       </Text>
 
+                      <FadeButton onPress={() => shareEvent(item)}>
+                        <View style={{ alignSelf: "flex-end", marginTop: 8 }}>
+                          <Ionicons name="share-outline" size={18} color="white" />
+                        </View>
+                      </FadeButton>
+
                       <Text style={{ color: theme.secondary, fontSize: 12 }}> 📅 {date ? date.toLocaleDateString() : "TBD"} </Text>
 
                       <Text style={{ color: theme.secondary, fontSize: 11 }}> ⏰ {item?.time || "Not set"} </Text>
@@ -235,7 +267,6 @@ export default function HomeScreen() {
             ))}
           </View>
         </GlassView>
-        {/* Recent Updates */}
         <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Recent Updates</Text>
         <GlassView glassEffectStyle="clear" intensity={50} style={styles.feedWindow}>
           <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} style={[{ marginTop: 2 }]}>
@@ -265,17 +296,14 @@ export default function HomeScreen() {
   );
 }
 
-// ---------- Compact Styles ----------
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 50 },
   scrollArea: { paddingBottom: 120 },
   sectionTitle: { fontSize: 18, fontWeight: "600", marginHorizontal: 16, marginBottom: 10, marginTop: -16 },
-  // Event cards 
   eventCard: { width: 230, height: 200, borderRadius: 15, overflow: "hidden" },
   eventImage: { width: "100%", height: "100%", justifyContent: "flex-end" },
   eventOverlay: { padding: 10, backgroundColor: "rgba(0,0,0,0.33)", borderBottomLeftRadius: 15, borderBottomRightRadius: 15 },
   eventTitle: { fontWeight: "700", fontSize: 15 },
-  // Insights UI kept unchanged 
   insightsContainer: { marginHorizontal: 16, borderRadius: 20, padding: 15, marginBottom: 40 },
   insightsSubtitle: { fontSize: 12, marginBottom: 15 },
   insightsLabel: { fontSize: 14, fontWeight: "600", marginVertical: 12 },
