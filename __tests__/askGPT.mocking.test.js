@@ -2,8 +2,6 @@ import { askGPT } from "../utils/gpt";
 
 beforeEach(() => {
   global.fetch = jest.fn();
-
-  // 🔕 Mute console output during this test file
   jest.spyOn(console, "log").mockImplementation(() => {});
   jest.spyOn(console, "error").mockImplementation(() => {});
 });

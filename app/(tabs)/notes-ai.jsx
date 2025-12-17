@@ -10,8 +10,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
+import { LinearGradient } from "expo-linear-gradient";
 import { askGPT } from "../../utils/gpt";
 import { useTheme } from "../../context/ThemeProvider";
+
+const GRADIENTS = {
+  background: ["#0F172A", "#1E293B"],      
+  card: ["#1E293B", "#111827"],            
+  active: ["#6366F1", "#8B5CF6"],           
+  output: ["#111827", "#1F2937"],           
+};
 
 export default function NotesAI() {
   const { theme } = useTheme();
@@ -40,16 +48,13 @@ export default function NotesAI() {
 
     let prompt = "";
 
-    if (type === "summary") 
+    if (type === "summary")
       prompt = `Summarize these notes in simple bullet points:\n${text}`;
     if (type === "flashcards")
       prompt = `Create flashcards from these notes. Q:..., A:...\nNotes:\n${text}`;
-    if (type === "quiz")
-      prompt = `Create 10 quiz questions with answers:\n${text}`;
-    if (type === "explain5")
-      prompt = `Explain these notes like I'm 5:\n${text}`;
-    if (type === "translate")
-      prompt = `Translate these notes to Albanian:\n${text}`;
+    if (type === "quiz") prompt = `Create 10 quiz questions with answers:\n${text}`;
+    if (type === "explain5") prompt = `Explain these notes like I'm 5:\n${text}`;
+    if (type === "translate") prompt = `Translate these notes to Albanian:\n${text}`;
 
     const response = await askGPT(prompt);
     setResult(response);
@@ -57,123 +62,154 @@ export default function NotesAI() {
   }
 
   return (
-    <ScrollView 
-      style={{ flex: 1, backgroundColor: theme.background }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
-    >
-      <Text style={[styles.header, { color: theme.textPrimary }]}>
-        AI Study Assistant
-      </Text>
+    <LinearGradient colors={GRADIENTS.background} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.page}>
+        <Text style={styles.header}>AI Study Assistant</Text>
+        <Text style={styles.subheader}>
+          Smart notes • Fast learning • AI powered
+        </Text>
 
-      <GlassView intensity={60} style={[styles.glassBox, { backgroundColor: theme.card }]}>
-        <TextInput
-          style={[styles.input, { color: theme.textPrimary }]}
-          placeholder="Paste your notes here..."
-          placeholderTextColor={theme.textMuted}
-          value={text}
-          multiline
-          onChangeText={setText}
-        />
-      </GlassView>
+        <LinearGradient colors={GRADIENTS.card} style={styles.card}>
+          <GlassView intensity={60} style={styles.glass}>
+            <TextInput
+              style={styles.input}
+              placeholder="Paste your notes here..."
+              placeholderTextColor="#9CA3AF"
+              value={text}
+              multiline
+              onChangeText={setText}
+            />
+          </GlassView>
+        </LinearGradient>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginTop: 12 }}
-      >
-        {modes.map((m) => {
-          const isActive = activeMode === m.id;
-          return (
-            <TouchableOpacity
-              key={m.id}
-              onPress={() => generate(m.id)}
-              activeOpacity={0.8}
-              style={[
-                styles.modeButton,
-                {
-                  backgroundColor: isActive ? theme.primary : theme.card,
-                  borderColor: isActive ? theme.primary : theme.border,
-                },
-              ]}
-            >
-              <Ionicons
-                name={m.icon}
-                size={16}
-                color={isActive ? "#fff" : theme.textPrimary}
-              />
-              <Text
-                style={[
-                  styles.modeLabel,
-                  { color: isActive ? "#fff" : theme.textPrimary },
-                ]}
-              >
-                {m.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 14 }}>
+          {modes.map((m) => {
+            const active = activeMode === m.id;
+
+            return (
+              <TouchableOpacity key={m.id} onPress={() => generate(m.id)}>
+                {active ? (
+                  <LinearGradient colors={GRADIENTS.active} style={styles.modeBtn}>
+                    <Ionicons name={m.icon} size={16} color="#fff" />
+                    <Text style={styles.modeTextActive}>{m.label}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={[styles.modeBtn, styles.modeInactive]}>
+                    <Ionicons name={m.icon} size={16} color="#CBD5E1" />
+                    <Text style={styles.modeText}>{m.label}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        <LinearGradient colors={GRADIENTS.card} style={[styles.card,{marginTop:20}]}>
+          <GlassView intensity={60} style={styles.glass}>
+            {loading ? (
+            <View >
+              <Text style={styles.loadingText}>Generating…</Text>
+            </View>
+          ) : (
+            <Text style={styles.result}>
+              {result || "No response yet."}
+            </Text>
+          )}
+          </GlassView>
+        </LinearGradient>
       </ScrollView>
-
-      {/* Output */}
-      <GlassView intensity={50} style={[styles.outputBox, { borderColor: theme.border }]}>
-        {loading ? (
-          <ActivityIndicator size="large" color={theme.primary} />
-        ) : (
-          <Text style={[styles.outputText, { color: theme.textPrimary }]}>
-            {result || "No response yet."}
-          </Text>
-        )}
-      </GlassView>
-    </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 10,
-    marginTop: 70,
+  page: {
+    padding: 16,
+    paddingBottom: 120,
   },
 
-  glassBox: {
+  header: {
+    fontSize: 26,
+    fontWeight: "800",
+    marginTop: 60,
+    color: "#E5E7EB",
+  },
+
+  subheader: {
+    marginTop: 6,
+    marginBottom: 14,
+    fontSize: 13,
+    color: "#9CA3AF",
+  },
+
+  card: {
     borderRadius: 20,
+    padding: 2,
+  },
+
+  glass: {
+    borderRadius: 18,
     padding: 14,
-    minHeight: 150,
-    justifyContent: "flex-start",
+    minHeight: 160,
   },
 
   input: {
     fontSize: 15,
-    lineHeight: 20,
+    lineHeight: 22,
+    color: "#E5E7EB",
   },
 
-  modeButton: {
+  modeBtn: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 14,
+    borderRadius: 999,
     marginRight: 10,
-    borderWidth: 1,
   },
 
-  modeLabel: {
+  modeInactive: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+
+  modeText: {
+    marginLeft: 7,
     fontSize: 13,
     fontWeight: "600",
-    marginLeft: 6,
+    color: "#CBD5E1",
   },
 
-  outputBox: {
-    marginTop: 20,
+  modeTextActive: {
+    marginLeft: 7,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#fff",
+  },
+
+  output: {
+    marginTop: 18,
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
-    minHeight: 200,
+    minHeight: 220,
+    
   },
 
-  outputText: {
+  result: {
     fontSize: 15,
     lineHeight: 22,
+    color: "#E5E7EB",
+  },
+
+  loading: {
+    alignItems: "center",
+    gap: 10,
+    paddingTop: 20,
+  },
+
+  loadingText: {
+    fontSize: 13,
+    color: "#9CA3AF",
   },
 });
