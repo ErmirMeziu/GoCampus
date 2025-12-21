@@ -18,9 +18,7 @@ import FadeButton from "../../components/FadeButton";
 const getItemDate = (item) => {
   if (!item) return null;
 
-  // ✅ Prefer the scheduled event date + time
   if (item.date) {
-    // Firestore Timestamp
     if (typeof item.date === "object" && item.date?.toDate) {
       return item.date.toDate();
     }
@@ -28,27 +26,22 @@ const getItemDate = (item) => {
     if (typeof item.date === "string") {
       const dateStr = item.date.trim();
 
-      // If it's "YYYY-MM-DD", merge with time if exists, otherwise end-of-day
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
         const [y, m, d] = dateStr.split("-").map(Number);
 
-        // time "HH:MM" (from your modal)
         if (typeof item.time === "string" && /^\d{2}:\d{2}$/.test(item.time.trim())) {
           const [hh, mm] = item.time.trim().split(":").map(Number);
           return new Date(y, m - 1, d, hh, mm, 0, 0);
         }
 
-        // no time → treat as end of day
         return new Date(y, m - 1, d, 23, 59, 59, 999);
       }
 
-      // ISO or other
       const parsed = new Date(dateStr);
       if (!isNaN(parsed)) return parsed;
     }
   }
 
-  // fallback for other feed items (groups/resources)
   const raw = item.dateCreated || item.createdAt;
   if (!raw) return null;
   if (typeof raw === "object" && raw?.toDate) return raw.toDate();
@@ -120,9 +113,6 @@ useEffect(() => {
 
   return () => unsub && unsub();
 }, []);
-
-
-
 
   useEffect(() => {
     const unsub = listenGroups(list => setGroups(list || []));
@@ -217,25 +207,6 @@ https://gocampus.app/event/${event.id}
             </View>
           </View>
 
-          <View style={styles.headerIcons}>
-            <TouchableOpacity>
-              <Ionicons
-                name="add-circle-outline"
-                size={24}
-                color={theme.textPrimary}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-
-            <Ionicons
-              name="notifications-outline"
-              size={22}
-              color={theme.textPrimary}
-              style={styles.icon}
-            />
-
-
-          </View>
         </View>
         <CourseCompanion
           resources={resources}
@@ -280,10 +251,6 @@ https://gocampus.app/event/${event.id}
             );
           }}
         />
-
-
-
-
 
         <Text style={[styles.sectionTitle, { color: theme.textPrimary, marginTop: 25 }]}>Campus Insights</Text>
         <GlassView glassEffectStyle="clear" intensity={50} style={styles.insightsContainer}>

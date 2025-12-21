@@ -15,7 +15,7 @@ import { router } from "expo-router";
 
 const norm = (v) => (typeof v === "string" ? v.toLowerCase() : "");
 
-export default function CourseCompanion({ resources = [], groups = [] }) {
+function CourseCompanion({ resources = [], groups = [] }) {
     const { theme } = useTheme();
 
     const [query, setQuery] = useState("");
@@ -203,6 +203,8 @@ export default function CourseCompanion({ resources = [], groups = [] }) {
         </ScrollView >
     );
 }
+
+export default React.memo(CourseCompanion);
 
 const styles = StyleSheet.create({
     searchBar: {

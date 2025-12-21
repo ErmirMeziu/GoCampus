@@ -103,27 +103,22 @@ export const listenUpcomingEventsForUser = (userId, callback) => {
   const raw = e?.date;
   if (!raw) return null;
 
-  // Firestore Timestamp
   if (raw?.toDate) return raw.toDate();
 
   if (typeof raw === "string") {
     const dateStr = raw.trim();
 
-    // ✅ "YYYY-MM-DD"
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       const [y, m, d] = dateStr.split("-").map(Number);
 
-      // ✅ merge time "HH:MM" if present
       if (typeof e.time === "string" && /^\d{2}:\d{2}$/.test(e.time.trim())) {
         const [hh, mm] = e.time.trim().split(":").map(Number);
         return new Date(y, m - 1, d, hh, mm, 0, 0);
       }
 
-      // ✅ no time -> end of day
       return new Date(y, m - 1, d, 23, 59, 59, 999);
     }
 
-    // ISO or other
     const parsed = new Date(dateStr);
     return isNaN(parsed) ? null : parsed;
   }
@@ -145,7 +140,6 @@ export const listenUpcomingEventsForUser = (userId, callback) => {
         .map((g) => g.id)
     );
 
-    // IMPORTANT: unsubscribe previous events listener before creating a new one
     if (unsubEvents) unsubEvents();
 
     unsubEvents = listenEvents((events) => {
@@ -164,7 +158,6 @@ export const listenUpcomingEventsForUser = (userId, callback) => {
         return isNoGroup || isInJoinedGroup || isInOwnedGroup || isMine;
       });
 
-      // optional: sort soonest first
       filtered.sort((a, b) => safeDate(a) - safeDate(b));
 
       callback(filtered);

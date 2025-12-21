@@ -33,15 +33,12 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
   const [location, setLocation] = useState("");
   const [groupId, setGroupId] = useState(groups?.[0]?.id ?? null);
 
-  // ✅ real date/time
-  const [eventDate, setEventDate] = useState(null); // Date object
-  const [eventTime, setEventTime] = useState(null); // Date object
+  const [eventDate, setEventDate] = useState(null); 
+  const [eventTime, setEventTime] = useState(null); 
 
-  // ✅ temp values for iOS wheel until user presses OK
   const [tempDate, setTempDate] = useState(null);
   const [tempTime, setTempTime] = useState(null);
 
-  // ✅ require at least one photo
   const [image, setImage] = useState(null);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -78,9 +75,8 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
 
     onSave({
       title: title.trim(),
-      // ✅ store consistent formats
-      date: toYYYYMMDD(eventDate), // "YYYY-MM-DD"
-      time: toHHMM(eventTime), // "HH:MM"
+      date: toYYYYMMDD(eventDate),
+      time: toHHMM(eventTime), 
       location: location.trim(),
       groupId: groupId ?? null,
       imageBase64: image?.base64 || null,
@@ -131,7 +127,6 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
                       onChangeText={setTitle}
                     />
 
-                    {/* ✅ Date + Time buttons */}
                     <View style={styles.row}>
                       <TouchableOpacity
                         style={[styles.pickerBtn, { flex: 1 }]}
@@ -158,7 +153,6 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
                       </TouchableOpacity>
                     </View>
 
-                    {/* ✅ iOS wheel with OK/Cancel */}
                     {showDatePicker && Platform.OS === "ios" && (
                       <View style={styles.pickerContainer}>
                         <DateTimePicker
@@ -233,7 +227,6 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
                       </View>
                     )}
 
-                    {/* ✅ Android native pickers (auto OK) */}
                     {showDatePicker && Platform.OS !== "ios" && (
                       <DateTimePicker
                         value={eventDate || new Date()}
@@ -290,7 +283,6 @@ export default function CreateEventModal({ visible, onClose, onSave, groups = []
                       ))}
                     </ScrollView>
 
-                    {/* ✅ Require image */}
                     <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage}>
                       <Text style={styles.imagePickerText}>
                         {image ? "Change Image" : "Pick Event Image (Required)"}
@@ -400,7 +392,6 @@ const styles = StyleSheet.create({
   },
   pickerText: { color: "#fff", fontWeight: "600" },
 
-  // ✅ iOS picker + OK/Cancel
   pickerContainer: {
     backgroundColor: "rgba(0,0,0,0.45)",
     borderRadius: 14,

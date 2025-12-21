@@ -38,6 +38,42 @@ import { auth } from "../../firebase/config";
 
 const CATEGORIES = ["All", "Tech", "Arts", "Study", "Sports", "Social"];
 
+const getItemDate = (item) => {
+  if (!item) return null;
+
+  if (item.date) {
+    if (typeof item.date === "object" && item.date?.toDate) {
+      return item.date.toDate();
+    }
+
+    if (typeof item.date === "string") {
+      const dateStr = item.date.trim();
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const [y, m, d] = dateStr.split("-").map(Number);
+
+        if (typeof item.time === "string" && /^\d{2}:\d{2}$/.test(item.time.trim())) {
+          const [hh, mm] = item.time.trim().split(":").map(Number);
+          return new Date(y, m - 1, d, hh, mm, 0, 0);
+        }
+
+        return new Date(y, m - 1, d, 23, 59, 59, 999);
+      }
+
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed)) return parsed;
+    }
+  }
+
+  if (item.createdAt) {
+    const parsed = new Date(item.createdAt);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
+};
+
+
 export default function GroupsScreen() {
   const { theme, isDarkMode } = useTheme();
   const { scrollTo } = useLocalSearchParams();
@@ -162,10 +198,17 @@ export default function GroupsScreen() {
     [groups]
   );
 
-  const upcomingEvents = useMemo(
-    () => [...events].sort((a, b) => new Date(a.date) - new Date(b.date)),
-    [events]
-  );
+  const upcomingEvents = useMemo(() => {
+  const now = new Date();
+
+  return [...events]
+    .filter((e) => {
+      const start = getItemDate(e);
+      return start && start.getTime() > now.getTime();
+    })
+    .sort((a, b) => getItemDate(a) - getItemDate(b));
+}, [events]);
+
 
   const toggleJoin = async (group) => {
     await toggleJoinDB(group);
