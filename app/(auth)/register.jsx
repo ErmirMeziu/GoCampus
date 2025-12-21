@@ -14,6 +14,7 @@ import { useTheme, toOpacity } from "../../context/ThemeProvider";
 import { GlassView } from "expo-glass-effect";
 import { router } from "expo-router";
 import { Keyboard, TouchableWithoutFeedback } from "react-native";
+import LottieView from "lottie-react-native";
 
 
 import PasswordInput from "../../components/PasswordInput";
@@ -35,7 +36,7 @@ export default function RegisterScreen() {
     const handleRegister = async () => {
         setError("");
         setLoading(true);
-          const loweredEmail = email.trim().toLowerCase();
+        const loweredEmail = email.trim().toLowerCase();
 
         const validationError = validateRegistration(
             fullName,
@@ -61,7 +62,7 @@ export default function RegisterScreen() {
         setLoading(false);
         setTimeout(() => router.replace("/home"), 300);
     };
-    
+
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -74,6 +75,16 @@ export default function RegisterScreen() {
                 style={StyleSheet.absoluteFillObject}
                 resizeMode="cover"
             >
+                <LottieView
+
+                    pointerEvents="none"
+                    source={require("../../assets/snow2.json")}
+                    autoPlay
+                    loop
+                    resizeMode="cover"
+
+                    style={styles.snow}
+                />
                 <View style={styles.container}>
                     <View style={styles.inner}>
                         <Text style={[styles.title, { color: theme.textPrimary }]}>
@@ -94,7 +105,7 @@ export default function RegisterScreen() {
                             <TextInput
                                 placeholder="Email"
                                 placeholderTextColor={theme.textMuted}
-                                style={[styles.input, { color: theme.textPrimary, borderColor: toOpacity(theme.textPrimary, 0.3),borderWidth:1,}]}
+                                style={[styles.input, { color: theme.textPrimary, borderColor: toOpacity(theme.textPrimary, 0.3), borderWidth: 1, }]}
                                 value={email}
                                 onChangeText={setEmail}
                                 autoCapitalize="none"
@@ -116,15 +127,22 @@ export default function RegisterScreen() {
                             />
 
                             <TouchableOpacity
-                                style={[styles.primaryBtn, { backgroundColor: theme.primary }]}
                                 onPress={handleRegister}
                                 disabled={loading}
+                                activeOpacity={0.85}
                             >
-                                {loading ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
-                                    <Text style={styles.primaryBtnText}>Register</Text>
-                                )}
+                                <ImageBackground
+                                    source={require("../../assets/buttonback.png")} 
+                                    resizeMode="stretch"
+                                    style={styles.primaryBtn}
+                                    imageStyle={[,{borderRadius:12}]}
+                                >
+                                    {loading ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <Text style={styles.primaryBtnText}>Register</Text>
+                                    )}
+                                </ImageBackground>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -135,7 +153,7 @@ export default function RegisterScreen() {
                             >
                                 <Text style={[styles.linkText, { color: theme.textMuted }]}>
                                     Already have an account?{" "}
-                                    <Text style={{ color: theme.primary, fontWeight: "600" }}>
+                                    <Text style={{ color: "#8d0606", fontWeight: "600" }}>
                                         Login
                                     </Text>
                                 </Text>
@@ -189,4 +207,15 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         textAlign: "center",
     },
+    snow: {
+        position: "absolute",
+        top: 0,
+        left: 35,
+        right: 0,
+        bottom: 0,
+        zIndex: 1,
+
+    },
+   
+
 });

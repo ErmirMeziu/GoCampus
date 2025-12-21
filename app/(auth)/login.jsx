@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { GlassView } from "expo-glass-effect";
 import { useTheme, toOpacity } from "../../context/ThemeProvider";
 import { router, usePathname } from "expo-router";
+import LottieView from "lottie-react-native";
 
 import PasswordInput from "../../components/PasswordInput";
 
@@ -88,7 +89,7 @@ export default function LoginScreen() {
                 github: friendlyError(result.error),
             }));
             return;
-        } 
+        }
         await createUserProfileIfNotExists(
             result.user.uid,
             result.user.email,
@@ -111,6 +112,15 @@ export default function LoginScreen() {
             style={StyleSheet.absoluteFillObject}
             resizeMode="cover"
         >
+            <LottieView
+                pointerEvents="none"
+                source={require("../../assets/snow2.json")}
+                autoPlay
+                loop
+                resizeMode="cover"
+
+                style={styles.snow}
+            />
             <View style={styles.container}>
                 <View style={styles.inner}>
 
@@ -144,12 +154,27 @@ export default function LoginScreen() {
                         {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
                         <TouchableOpacity
-                            style={[styles.primaryBtn, { backgroundColor: loading ? "#999" : theme.primary }]}
                             onPress={handleEmailLogin}
                             disabled={loading}
+                            activeOpacity={0.85}
+                            style={{ marginTop: 8 }}
                         >
-                            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Login</Text>}
+                            <ImageBackground
+                                source={require("../../assets/buttonback.png")}
+                                resizeMode="stretch"
+                                style={[
+                                    styles.primaryBtn,
+                                ]}
+                                imageStyle={{ borderRadius: 12 }}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <Text style={styles.primaryBtnText}>Login</Text>
+                                )}
+                            </ImageBackground>
                         </TouchableOpacity>
+
 
                         <Text style={[styles.orText, { color: theme.textMuted }]}>
                             ─── or continue with ───
@@ -179,7 +204,7 @@ export default function LoginScreen() {
                     <TouchableOpacity style={styles.linkWrapper} onPress={() => router.push("/register")}>
                         <Text style={[styles.linkText, { color: theme.textMuted }]}>
                             Don’t have an account?{" "}
-                            <Text style={{ color: theme.primary, fontWeight: "600" }}>Register</Text>
+                            <Text style={{ color: "#8d0606", fontWeight: "600" }}>Register</Text>
                         </Text>
                     </TouchableOpacity>
 
@@ -256,5 +281,14 @@ const styles = StyleSheet.create({
         fontSize: 12,
         textAlign: "center",
         marginTop: 8,
+    },
+    snow: {
+        position: "absolute",
+        top: 0,
+        left: 35,
+        right: 0,
+        bottom: 0,
+        zIndex: 100,
+
     },
 });
