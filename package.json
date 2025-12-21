@@ -45,13 +45,9 @@
     "react-native-status-bar-height": "^2.6.0",
     "react-native-svg": "^15.12.1",
     "react-native-toast-message": "^2.3.3",
-<<<<<<< Updated upstream
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1",
     "snowfall": "^2.1.0"
-=======
-    "react-native-web": "^0.21.0"
->>>>>>> Stashed changes
   },
   "private": true,
   "jest": {
