@@ -17,12 +17,46 @@ import FadeButton from "../../components/FadeButton";
 
 const getItemDate = (item) => {
   if (!item) return null;
-  const raw = item.dateCreated || item.date || item.createdAt;
+
+  // ✅ Prefer the scheduled event date + time
+  if (item.date) {
+    // Firestore Timestamp
+    if (typeof item.date === "object" && item.date?.toDate) {
+      return item.date.toDate();
+    }
+
+    if (typeof item.date === "string") {
+      const dateStr = item.date.trim();
+
+      // If it's "YYYY-MM-DD", merge with time if exists, otherwise end-of-day
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const [y, m, d] = dateStr.split("-").map(Number);
+
+        // time "HH:MM" (from your modal)
+        if (typeof item.time === "string" && /^\d{2}:\d{2}$/.test(item.time.trim())) {
+          const [hh, mm] = item.time.trim().split(":").map(Number);
+          return new Date(y, m - 1, d, hh, mm, 0, 0);
+        }
+
+        // no time → treat as end of day
+        return new Date(y, m - 1, d, 23, 59, 59, 999);
+      }
+
+      // ISO or other
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed)) return parsed;
+    }
+  }
+
+  // fallback for other feed items (groups/resources)
+  const raw = item.dateCreated || item.createdAt;
   if (!raw) return null;
-  if (typeof raw === "object" && raw.toDate) return raw.toDate();
+  if (typeof raw === "object" && raw?.toDate) return raw.toDate();
+
   const parsed = new Date(raw);
   return isNaN(parsed) ? null : parsed;
 };
+
 
 const timeAgo = (date) => {
   if (!date) return "";
@@ -35,15 +69,29 @@ const timeAgo = (date) => {
 };
 
 const getEventImageSource = (event) => {
-  if (event?.imageBase64) {
-    if (Array.isArray(event.imageBase64)) {
-      const restored = restoreImages(event.imageBase64);
-      return restored.length ? { uri: restored[0].uri } : null;
+  if (Array.isArray(event?.imageBase64)) {
+    const restored = restoreImages(event.imageBase64);
+    if (restored?.length?.[0]?.uri) return { uri: restored[0].uri };
+    if (restored?.length && restored[0]?.base64) {
+      return { uri: `data:image/jpeg;base64,${restored[0].base64}` };
     }
-    return { uri: `data:image/jpeg;base64,${event.imageBase64}` };
   }
-  return { uri: event?.image || "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?auto=format&fit=crop&w=1000&q=80", };
+
+  if (typeof event?.imageBase64 === "string" && event.imageBase64.trim()) {
+    const b64 = event.imageBase64.trim();
+    if (b64.startsWith("data:image")) return { uri: b64 };
+    return { uri: `data:image/jpeg;base64,${b64}` };
+  }
+
+  if (typeof event?.image === "string" && event.image.trim()) {
+    return { uri: event.image.trim() };
+  }
+
+  return {
+    uri: "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?auto=format&fit=crop&w=1000&q=80",
+  };
 };
+
 
 const randomColor = () => `hsl(${Math.floor(Math.random() * 360)},65%,70%)`;
 
@@ -60,21 +108,18 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
 
-  useEffect(() => {
-    if (!auth.currentUser?.uid) return;
+useEffect(() => {
+  if (!auth.currentUser?.uid) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    const unsub = listenUpcomingEventsForUser(
-      auth.currentUser.uid,
-      (list) => {
-        setEvents(list);
-        setLoading(false);
-      }
-    );
+  const unsub = listenUpcomingEventsForUser(auth.currentUser.uid, (list) => {
+    setEvents(list || []);
+    setLoading(false);
+  });
 
-    return () => unsub && unsub();
-  }, []);
+  return () => unsub && unsub();
+}, []);
 
 
 
@@ -92,14 +137,15 @@ export default function HomeScreen() {
   const insights = useMemo(() => calculateCategoryInsights(groups), [groups]);
 
   const upcomingEvents = useMemo(() => {
-    const now = new Date();
-    return [...events]
-      .filter(e => {
-        const d = getItemDate(e);
-        return !d || d >= now;
-      })
-      .sort((a, b) => getItemDate(a) - getItemDate(b));
-  }, [events]);
+  const now = new Date();
+  return [...events]
+    .filter((e) => {
+      const d = getItemDate(e);
+      return d && d >= now;
+    })
+    .sort((a, b) => getItemDate(a) - getItemDate(b));
+}, [events]);
+
 
   const recentUpdates = useMemo(() => {
     const eventEntries = events.map(e => ({ ...e, _type: "event", _time: getItemDate(e) }));
@@ -234,6 +280,9 @@ https://gocampus.app/event/${event.id}
             );
           }}
         />
+
+
+
 
 
         <Text style={[styles.sectionTitle, { color: theme.textPrimary, marginTop: 25 }]}>Campus Insights</Text>

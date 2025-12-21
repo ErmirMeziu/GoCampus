@@ -97,32 +97,82 @@ export async function createEventDB(event) {
 }
 
 export const listenUpcomingEventsForUser = (userId, callback) => {
-  const unsubGroups = listenGroups((groups) => {
-    const joinedGroupIds = new Set(
-      groups
-        .filter(g => g.joinedBy?.includes(userId))
-        .map(g => g.id)
-    );
+  let unsubEvents = null;
 
-    const unsubEvents = listenEvents((events) => {
-      const now = new Date();
+  const safeDate = (e) => {
+  const raw = e?.date;
+  if (!raw) return null;
 
-      const filtered = events.filter(e => {
-        const d = e.date?.toDate?.() || new Date(e.date);
-        if (!d || d < now) return false;
+  // Firestore Timestamp
+  if (raw?.toDate) return raw.toDate();
 
-        if (!e.groupId) return true;
+  if (typeof raw === "string") {
+    const dateStr = raw.trim();
 
-        return joinedGroupIds.has(e.groupId);
-      });
+    // ✅ "YYYY-MM-DD"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [y, m, d] = dateStr.split("-").map(Number);
 
-      callback(filtered);
-    });
+      // ✅ merge time "HH:MM" if present
+      if (typeof e.time === "string" && /^\d{2}:\d{2}$/.test(e.time.trim())) {
+        const [hh, mm] = e.time.trim().split(":").map(Number);
+        return new Date(y, m - 1, d, hh, mm, 0, 0);
+      }
 
-    return () => unsubEvents && unsubEvents();
-  });
+      // ✅ no time -> end of day
+      return new Date(y, m - 1, d, 23, 59, 59, 999);
+    }
 
-  return () => unsubGroups && unsubGroups();
+    // ISO or other
+    const parsed = new Date(dateStr);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
 };
 
 
+  const unsubGroups = listenGroups((groups) => {
+    const joinedGroupIds = new Set(
+      groups
+        .filter((g) => Array.isArray(g.joinedBy) && g.joinedBy.includes(userId))
+        .map((g) => g.id)
+    );
+
+    const ownedGroupIds = new Set(
+      groups
+        .filter((g) => g.ownerId === userId)
+        .map((g) => g.id)
+    );
+
+    // IMPORTANT: unsubscribe previous events listener before creating a new one
+    if (unsubEvents) unsubEvents();
+
+    unsubEvents = listenEvents((events) => {
+      const now = new Date();
+
+      const filtered = events.filter((e) => {
+        const d = safeDate(e);
+        if (!d) return false;
+        if (d < now) return false;
+
+        const isNoGroup = !e.groupId;
+        const isInJoinedGroup = e.groupId && joinedGroupIds.has(e.groupId);
+        const isInOwnedGroup = e.groupId && ownedGroupIds.has(e.groupId);
+        const isMine = e.createdBy === userId;
+
+        return isNoGroup || isInJoinedGroup || isInOwnedGroup || isMine;
+      });
+
+      // optional: sort soonest first
+      filtered.sort((a, b) => safeDate(a) - safeDate(b));
+
+      callback(filtered);
+    });
+  });
+
+  return () => {
+    if (unsubEvents) unsubEvents();
+    if (unsubGroups) unsubGroups();
+  };
+};
