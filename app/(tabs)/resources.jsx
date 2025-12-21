@@ -233,8 +233,8 @@ export default function ResourceSharingScreen() {
                   }}
                 >
                   <Ionicons name="create-outline" size={18} color={theme.primary} />
-                </FadeButton>   
-                
+                </FadeButton>
+
                 <FadeButton onPress={() => confirmDeleteResource(item)}>
                   <Ionicons name="trash-outline" size={18} color="red" />
                 </FadeButton>
@@ -305,32 +305,41 @@ export default function ResourceSharingScreen() {
         style={StyleSheet.absoluteFillObject}
       />
 
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Resources</Text>
-
-        <FadeButton onPress={() => setCreateVisible(true)}>
-          <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
-        </FadeButton>
+      <View style={styles.headerRow}>
+        <Text style={[styles.screenTitle, { color: theme.textPrimary }]}>Resources</Text>
+        
+        <View style={{ flexDirection: "row" }}>
+          <FadeButton onPress={() => setCreateVisible(true)}>
+            <View style={styles.headerBtn}>
+              <Ionicons name="add-circle-outline" size={22} color={theme.primary} />
+            </View>
+          </FadeButton>
+        </View>
       </View>
 
-      <GlassView intensity={60} style={[styles.searchBar, { backgroundColor: theme.card }]}>
-        <Ionicons name="search" size={16} color={theme.textMuted} />
-        <TextInput
-          placeholder="Search resources..."
-          placeholderTextColor={theme.textMuted}
-          value={query}
-          onChangeText={handleSearch}
-          style={[styles.searchInput, { color: theme.textPrimary }]}
-        />
-        {query.length > 0 && (
-          <TouchableOpacity onPress={clearSearchAndFocusAll}>
-            <Ionicons name="close-circle" size={18} color={theme.textMuted} />
-          </TouchableOpacity>
-        )}
+      <GlassView
+        intensity={60}
+        style={[styles.filterHeader, { backgroundColor: theme.card }]}
+      >
+        <View style={styles.searchRow}>
+          <Ionicons name="search" size={16} color={theme.textMuted} />
+          <TextInput
+            placeholder="Search resources..."
+            placeholderTextColor={theme.textMuted}
+            value={query}
+            onChangeText={handleSearch}
+            style={[styles.searchInput, { color: theme.textPrimary }]}
+          />
 
+          {query.length > 0 && (
+            <TouchableOpacity onPress={clearSearchAndFocusAll}>
+              <Ionicons name="close-circle" size={18} color={theme.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
       </GlassView>
 
-      <View style={styles.categories}>
+      <View style={styles.categoriesWrap}>
         {CATEGORY_CHIPS.map((c) => (
           <TouchableOpacity
             key={c}
@@ -347,6 +356,7 @@ export default function ResourceSharingScreen() {
               style={{
                 color: activeCat === c ? "#fff" : theme.textPrimary,
                 fontWeight: "600",
+                fontSize: 12,
               }}
             >
               {c}
@@ -354,6 +364,7 @@ export default function ResourceSharingScreen() {
           </TouchableOpacity>
         ))}
       </View>
+
 
       <FlatList
         ref={listRef}
@@ -411,36 +422,38 @@ export default function ResourceSharingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+
+  headerRow: {
     marginTop: 45,
     paddingHorizontal: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: { fontSize: 24, fontWeight: "700" },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
+  screenTitle: { fontSize: 24, fontWeight: "700" },
+  headerBtn: { padding: 6, marginLeft: 8 },
+
+  filterHeader: {
+    marginHorizontal: 16,
+    marginTop: 12,
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    margin: 16,
-    gap: 8,
-    minHeight: 41,
+    padding: 12,
+    marginBottom: 10,
   },
+  searchRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   searchInput: { flex: 1, fontSize: 14 },
-  categories: {
+
+  categoriesWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
+    alignSelf: "center",
   },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     marginHorizontal: 4,
-    marginBottom: 6,
+    marginBottom: 8,
     borderWidth: 1,
   },
   card: { borderRadius: 18, overflow: "hidden", marginBottom: 14 },
@@ -452,13 +465,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardTitle: { fontSize: 16, fontWeight: "700" },
-  cardDesc: { fontSize: 13, marginTop: 6 },
+  cardDesc: { fontSize: 13, marginTop: 6, marginBottom:8 },
   cardInfo: { fontSize: 12, marginTop: 4 },
-  preview: { width: 110, height: 80, borderRadius: 12, marginRight: 8 },
+  preview: { width: 110, height: 80, borderRadius: 12, marginRight: 8,},
+
   lightbox: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.9)",
     justifyContent: "center",
     alignItems: "center",
   },
-}); 
+});

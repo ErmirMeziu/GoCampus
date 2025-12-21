@@ -145,8 +145,7 @@ export default function ProfileScreen() {
     { icon: "lock-closed-outline", title: "Password", subtitle: "Change password", type: "passwordModal" },
     { icon: "call-outline", title: "Phone", subtitle: userData.phone || "Not set", type: "phone", key: "phone" },
     { icon: "calendar-outline", title: "DOB", subtitle: userData.dob || "Not set", type: "date", key: "dob" },
-    { icon: "language-outline", title: "Language", subtitle: userData.language, type: "picker", key: "language" },
-    { icon: "notifications-outline", title: "Notifications", subtitle: userData.notifications ? "Enabled" : "Disabled", type: "toggle", key: "notifications" },
+    
   ];
 
   return (

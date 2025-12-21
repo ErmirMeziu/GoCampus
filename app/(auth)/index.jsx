@@ -60,7 +60,7 @@ export default function WelcomeScreen() {
             resizeMode="contain"
           />
           <Image
-            source={require("../../assets/img/gocampus1.png")}
+            source={require("../../assets/gocampus1.png")}
             style={styles.logo}
             resizeMode="contain"
           />

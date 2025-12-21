@@ -113,7 +113,7 @@ export default function CreateResourceModal({
 
     return (
         <Modal transparent visible={visible} onRequestClose={close}>
-           
+
             <Animated.View
                 style={[
                     StyleSheet.absoluteFill,
@@ -128,7 +128,7 @@ export default function CreateResourceModal({
                     style={{ width: "100%" }}
                 >
                     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    
+
                         <Animated.View style={modalStyle}>
                             <GlassView
                                 style={[styles.sheet, { backgroundColor: theme.overlay }]}
@@ -144,7 +144,7 @@ export default function CreateResourceModal({
                                 </View>
 
                                 <ScrollView showsVerticalScrollIndicator={false}>
-                                
+
                                     <View style={styles.typesRow}>
                                         {TYPES.map((t) => (
                                             <TouchableOpacity
@@ -205,6 +205,35 @@ export default function CreateResourceModal({
                                             },
                                         ]}
                                     />
+                                    {resourceType === "Equipment" && (
+                                        <>
+                                            <Text style={[styles.label, { color: theme.textMuted }]}>Condition</Text>
+                                            <TextInput
+                                                value={condition}
+                                                onChangeText={setCondition}
+                                                placeholder="e.g. New / Good / Used"
+                                                placeholderTextColor={theme.textMuted}
+                                                style={[
+                                                    styles.input,
+                                                    { color: theme.textPrimary, borderColor: theme.border },
+                                                ]}
+                                            />
+
+                                            <Text style={[styles.label, { color: theme.textMuted }]}>Borrow Duration (days)</Text>
+                                            <TextInput
+                                                value={borrowDuration}
+                                                onChangeText={setBorrowDuration}
+                                                placeholder="e.g. 3"
+                                                placeholderTextColor={theme.textMuted}
+                                                keyboardType="number-pad"
+                                                style={[
+                                                    styles.input,
+                                                    { color: theme.textPrimary, borderColor: theme.border },
+                                                ]}
+                                            />
+                                        </>
+                                    )}
+
 
                                     <Text style={[styles.label, { color: theme.textMuted }]}>Images</Text>
                                     <TouchableOpacity
@@ -273,8 +302,8 @@ export default function CreateResourceModal({
 }
 
 const styles = StyleSheet.create({
-    overlay: { flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.35)",padding: 16, },
-    sheet: {  borderRadius: 18,padding: 16, maxHeight: "100%", },
+    overlay: { flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.35)", padding: 16, },
+    sheet: { borderRadius: 18, padding: 16, maxHeight: "100%", },
     header: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
     title: { fontSize: 18, fontWeight: "700" },
     typesRow: { flexDirection: "row", flexWrap: "wrap", marginVertical: 8 },
