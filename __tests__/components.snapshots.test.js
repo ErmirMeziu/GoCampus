@@ -10,7 +10,7 @@ const theme = { card: "#111", textPrimary: "#fff", textMuted: "#aaa" };
 
 test("FadeButton snapshot", () => {
   const { toJSON } = render(
-    <FadeButton onPress={() => {}}>
+    <FadeButton onPress={() => { }}>
       <Text>Tap</Text>
     </FadeButton>
   );
@@ -21,7 +21,7 @@ test("EventCard snapshot", () => {
   const item = {
     image: "https://example.com/image.jpg",
     title: "GoCampus Event",
-    date: "2025-12-20T10:00:00.000Z",
+    date: "2026-12-10T10:00:00.000Z",
     time: "18:00",
     location: "Prishtina",
   };
@@ -34,7 +34,7 @@ test("PasswordInput snapshot", () => {
   const { toJSON } = render(
     <PasswordInput
       value=""
-      onChangeText={() => {}}
+      onChangeText={() => { }}
       placeholder="Password"
       theme={theme}
       error={false}

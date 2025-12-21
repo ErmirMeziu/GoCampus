@@ -1,99 +1,135 @@
-# 🎓 GoCampus — Student Community App
+# 🎓 GoCampus — Student Community App (Group XX)
 
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg?logo=react&logoColor=white)](https://react.dev/)
 [![React Native](https://img.shields.io/badge/React%20Native-0.76+-20232A.svg?logo=react&logoColor=61DAFB)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-51+-000020.svg?logo=expo&logoColor=white)](https://expo.dev/)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore-FFCA28.svg?logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E.svg?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-**GoCampus** is a full-featured mobile platform built with **Expo / React Native**, enabling university students to connect through **groups**, participate in campus events, earn **points**, compete on the **leaderboard**, access learning **resources**, and manage personal **profiles** with advanced account linking.
 
 ---
 
-## 🚀 Latest Features (2025 Update)
+## 📱 Përshkrim i Aplikacionit
 
-### 🔐 Authentication
-- Login with **Email + Password**
-- **GitHub auth** (web + Android, disabled on iOS)
-- Link/unlink email login
-- Protected routes using Firebase Auth
+**GoCampus** është një aplikacion mobil i zhvilluar me React Native (Expo) që synon të lidhë studentët universitarë përmes një platforme të centralizuar për grupe studentore, evente, dhe burime akademike. Aplikacioni përfshin një sistem autentikimi të sigurt, ruajtje të të dhënave në kohë reale përmes Firebase, si dhe mekanizma gamification me pikë dhe leaderboard për të rritur angazhimin e përdoruesve. Me një dizajn modern, mbështetje për Dark/Light Mode dhe navigim intuitiv, GoCampus ofron një eksperiencë të thjeshtë dhe efikase për menaxhimin e aktiviteteve akademike dhe sociale në kampus.
 
-### 🖼️ Profile
-- Editable settings (name, phone, DOB, language, notifications)
-- **Advanced profile picture cropper** (zoom + drag)
-- Connected emails & GitHub account section
-- Logout button integrated in UI
+---
 
-### 🏆 Points & Leaderboard
-- Firestore-powered real-time leaderboard  
-- Users automatically earn points for actions:
-  - Joining a group  
-  - Creating a group  
-  - Creating an event  
-  - Uploading a resource  
-  - Commenting  
-- Shows:
-  - Your **rank**
-  - Your **points**
-  - Top 3 with podium layout
-  - Scrollable list of others
+## ⭐ Funksionalitetet Kryesore
 
-### 👥 Groups
-- View all groups
-- Join / Leave groups
-- My Groups carousel
-- Create group modal
-- Edit group details
-- Group membership saved in Firestore (`joinedBy` array)
+### 🔐 Autentikimi
+- Kyçje me **Email & Password**
+- Kyçje me **GitHub**
+- Rruge të mbrojtura për përdorues të autentikuar
 
-### 📅 Events
-- Create events with title, date/time, location, optional image
-- Global upcoming events feed sorted by date
+### 👤 Profili i Përdoruesit
+- Ndryshim i të dhënave personale
+- Foto profili me **crop & zoom**
+- Menaxhim i llogarive të lidhura
+- Logout nga aplikacioni
 
-### 📚 Resources
-- Centralized notes/books/resources added by students
-- Upload from device
-- Awards points on upload
+### 👥 Grupet
+- Shfaqje e të gjitha grupeve
+- Bashkim / largim nga grupet
+- Krijim dhe editim i grupeve
+- Ruajtje e anëtarëve në Firebase Firestore
+
+### 📅 Eventet
+- Krijim eventesh me datë, orë dhe lokacion
+- Feed i eventeve të ardhshme
+
+### 📚 Burimet Akademike
+- Upload i librave, shënimeve dhe materialeve
+- Ruajtje në Firebase Storage
+- Fitim pikësh për çdo kontribuim
+
+### 🏆 Pikë & Leaderboard
+- Sistem pikësh për aktivitetet e përdoruesit
+- Leaderboard real-time
+- Rankim dhe podium për **Top 3** studentët
 
 ### 🤖 Notes AI
-- Smart note-making and explanations
-- Uses LLM integration
+- Gjenerim dhe shpjegim i shënimeve
+- Integrim me AI për ndihmë akademike
 
-### 🧭 Custom Glass Tab Bar
-- Fully custom bottom tab bar
-- Glass blur effect
-- Double-tap to reload data
-- Animated active icon
-- Works on iOS, Android, Web
+### 🎨 UI & Navigimi
+- Custom **Glass Tab Bar**
+- **Dark / Light Mode**
+- Animacione dhe blur effects
+---
+
+## 🖼️ Screenshots të Aplikacionit
+
+### 🔐 Authentication
+![Start](/assets/screenshots/prelogin.jpg)
+![Login](/assets/screenshots/login.jpg)
+![Register](/assets/screenshots/register.jpg)
+
+### 🏠 Home
+![Home](/assets/screenshots/home.jpg)
+
+### 👥 Groups
+![Groups](/assets/screenshots/events.jpg)
+
+### 📚 Resources
+![Resources](/assets/screenshots/resources.jpg)
+
+### 🏆 Leaderboard
+![Leaderboard](/assets/screenshots/leaderboard.jpg)
+
+### 🤖 Notes AI
+![Notes AI](/assets/screenshots/ai.jpg)
+
+### 👤 Profile
+![Profile](/assets/screenshots/profile.jpg)
+
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Teknologjitë e Përdorura
 
-| Feature | Technology |
-|--------|------------|
+| Pjesa | Teknologjia |
+|------|------------|
 | Frontend | React Native (Expo) |
 | Routing | Expo Router |
-| Auth | Firebase Auth |
-| Database | Firestore |
+| Autentikimi | Firebase Auth |
+| Database | Firebase Firestore |
 | Storage | Firebase Storage |
 | UI Effects | expo-glass-effect |
-| Icons | Ionicons |
-| Theme | Context API (light/dark) |
-
-
-## 🚀 Getting Started
-
-```bash
-npm install
-npx expo start
-```
-
-- Press **i** (iOS), **a** (Android), or scan the QR with **Expo Go**.
+| Ikonat | Ionicons |
+| Theme | Context API |
 
 ---
 
+## 🚀 Udhëzime për Instalimin
+
+1. Klononi repository-n:
+```bash
+git clone https://github.com/ErmirMeziu/GoCampus
+```
+
+2. Instaloni varësitë:
+```bash
+npm install
+```
+
+3. Startoni aplikacionin:
+```bash
+npx expo start --tunnel
+```
+
+4.Hapeni aplikacionin:
+- i → iOS Simulator
+- a → Android Emulator
+- Ose skanoni QR-Code me Expo Go
+
+---
+
+##  Udhëzime për Testimin
+
+```bash
+npm test
+```
+---
 
 ## 👥 Project Team
 
