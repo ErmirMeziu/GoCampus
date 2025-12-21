@@ -1,4 +1,4 @@
-# 🎓 GoCampus — Student Community App (Group XX)
+# 🎓 GoCampus — Student Community App
 
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg?logo=react&logoColor=white)](https://react.dev/)
 [![React Native](https://img.shields.io/badge/React%20Native-0.76+-20232A.svg?logo=react&logoColor=61DAFB)](https://reactnative.dev/)
@@ -60,27 +60,45 @@
 ## 🖼️ Screenshots të Aplikacionit
 
 ### 🔐 Authentication
-![Start](/assets/screenshots/prelogin.jpg)
-![Login](/assets/screenshots/login.jpg)
-![Register](/assets/screenshots/register.jpg)
+<p align="center">
+  <img src="/assets/screenshots/prelogin.jpg" width="260" />
+  <img src="/assets/screenshots/login.jpg" width="260" />
+  <img src="/assets/screenshots/register.jpg" width="260" />
+</p>
 
 ### 🏠 Home
-![Home](/assets/screenshots/home.jpg)
+<p align="center">
+  <img src="/assets/screenshots/home.jpg" width="260" />
+</p>
 
 ### 👥 Groups
-![Groups](/assets/screenshots/events.jpg)
+<p align="center">
+  <img src="/assets/screenshots/events.jpg" width="260" />
+</p>
 
 ### 📚 Resources
-![Resources](/assets/screenshots/resources.jpg)
+<p align="center">
+  <img src="/assets/screenshots/resources.jpg" width="260" />
+</p>
+
 
 ### 🏆 Leaderboard
-![Leaderboard](/assets/screenshots/leaderboard.jpg)
+<p align="center">
+  <img src="/assets/screenshots/leaderboard.jpg" width="260" />
+</p>
+
 
 ### 🤖 Notes AI
-![Notes AI](/assets/screenshots/ai.jpg)
+<p align="center">
+  <img src="/assets/screenshots/ai.jpg" width="260" />
+</p>
+
 
 ### 👤 Profile
-![Profile](/assets/screenshots/profile.jpg)
+<p align="center">
+  <img src="/assets/screenshots/profile.jpg" width="260" />
+</p>
+
 
 
 ---
@@ -148,4 +166,3 @@ FIEK - Universiteti i Prishtines
 
 This project is intended for educational purposes.  
 You may freely use and modify it for learning and non-commercial use.  
-(Consider adding **MIT** or another license if you plan to open-source.)
