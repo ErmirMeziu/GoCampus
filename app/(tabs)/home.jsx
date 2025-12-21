@@ -61,6 +61,19 @@ const timeAgo = (date) => {
   return Math.floor(diff / 86400) + "d ago";
 };
 
+const getCountdown = (targetDate, now) => {
+  if (!targetDate) return "TBD";
+
+  const diff = Math.max(0, targetDate - now);
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
+
 const getEventImageSource = (event) => {
   if (Array.isArray(event?.imageBase64)) {
     const restored = restoreImages(event.imageBase64);
@@ -99,6 +112,7 @@ export default function HomeScreen() {
   const [resources, setResources] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(new Date());
 
 
 useEffect(() => {
@@ -114,6 +128,18 @@ useEffect(() => {
   return () => unsub && unsub();
 }, []);
 
+<<<<<<< Updated upstream
+=======
+useEffect(() => {
+  const interval = setInterval(() => {
+    setNow(new Date());
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, []);
+
+
+>>>>>>> Stashed changes
   useEffect(() => {
     const unsub = listenGroups(list => setGroups(list || []));
     return () => unsub && unsub();
@@ -239,6 +265,11 @@ https://gocampus.app/event/${event.id}
                         </View>
                       </FadeButton>
 
+                      <Text style={styles.countdownText}>
+                       ⏳ {getCountdown(date, now)}
+                      </Text>
+
+
                       <Text style={{ color: theme.secondary, fontSize: 12 }}> 📅 {date ? date.toLocaleDateString() : "TBD"} </Text>
 
                       <Text style={{ color: theme.secondary, fontSize: 11 }}> ⏰ {item?.time || "Not set"} </Text>
@@ -334,6 +365,7 @@ const styles = StyleSheet.create({
   postHeader: { flexDirection: "row", alignItems: "center" },
   postAvatar: { width: 36, height: 36, borderRadius: 18 },
   feedWindow: { maxHeight: 195, marginHorizontal: 16, overflow: "hidden", borderRadius: 16, },
+  countdownText: { color: "white", fontSize: 12, marginTop: 2, fontWeight: "600", alignSelf: "flex-end", },
   header: {
     marginHorizontal: 16,
     flexDirection: "row",
